@@ -5,6 +5,10 @@
 *.tfstate
 *.tfstate.*
 
+# Keys
+*.pem
+*.key
+
 # Crash log files
 crash.log
 crash.*.log
