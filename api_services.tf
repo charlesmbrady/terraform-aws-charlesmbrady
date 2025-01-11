@@ -1,5 +1,6 @@
 module "services_api" {
-  source  = "../../modules/api_gateway"
+  source  = "app.terraform.io/charlava/apigw-module/aws"
+  version = "1.2.0"
 
   api_name       = var.services_api_name
   api_stage_name = var.services_api_stage_name

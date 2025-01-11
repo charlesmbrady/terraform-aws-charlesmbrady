@@ -7,7 +7,9 @@ locals {
 }
 
 module "services_middleware_lambda" {
-  source  = "../../modules/lambda"
+  source  = "app.terraform.io/charlava/lambda-module/aws"
+  version = "1.1.0"
+
 
   name     = local.services_middleware_name
   app_name = local.services_middleware_app_name
@@ -32,7 +34,8 @@ module "services_middleware_lambda" {
 }
 
 module "services_middleware_iam" {
-  source  = "../../modules/iam"
+  source  = "app.terraform.io/charlava/iam-module/aws"
+  version = "1.1.0"
 
   iam_permissions_boundary_policy_arn = data.aws_iam_policy.role_permissions_boundary.arn
 
@@ -47,7 +50,8 @@ module "services_middleware_iam" {
 }
 
 module "services_middleware_secrets" {
-  source  = "../../modules/secrets"
+  source  = "app.terraform.io/charlava/secrets-module/aws"
+  version = "1.1.0"
 
   kms_key_id                        = data.kms_key.master.arn
   role_arns_to_allow_secrets_access = [module.services_middleware_iam.role_arn]
