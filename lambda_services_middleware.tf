@@ -32,14 +32,14 @@ module "services_middleware_lambda" {
 }
 
 module "services_middleware_iam" {
-  source  = "./modules/iam"
+  source  = "../modules/iam"
 
   iam_permissions_boundary_policy_arn = data.aws_iam_policy.role_permissions_boundary.arn
 
   role_name          = "${local.services_middleware_app_name}-role"
   policy_name        = "${local.services_middleware_app_name}-policy"
-  assume_role_policy = file("./iam_policies/lambda_assume_role.json")
-  template           = file("./iam_policies/lambda_common.json")
+  assume_role_policy = file("../iam_policies/lambda_assume_role.json")
+  template           = file("../iam_policies/lambda_common.json")
 
   role_vars = {
     kms_key_id     = data.kms_key.master.arn
