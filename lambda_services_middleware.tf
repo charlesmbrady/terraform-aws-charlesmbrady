@@ -1,9 +1,9 @@
 locals {
   services_middleware_name     = "services_middleware"
   services_middleware_app_name = "services-middleware"
-  services_middleware_secrets_env_vars = {
-    for k, v in module.services_middleware_secrets.secret_versions : "${tostring(k)}_SECRET_ARN" => tostring(v["arn"])
-  }
+  # services_middleware_secrets_env_vars = {
+  #   for k, v in module.services_middleware_secrets.secret_versions : "${tostring(k)}_SECRET_ARN" => tostring(v["arn"])
+  # }
 }
 
 module "services_middleware_lambda" {
@@ -28,7 +28,7 @@ module "services_middleware_lambda" {
   timeout                             = 900 # use whole 15m
 
   environment_variables = merge(
-    local.services_middleware_secrets_env_vars,
+    # local.services_middleware_secrets_env_vars,
     var.services_middleware_environment_variables
   )
 }
@@ -49,12 +49,12 @@ module "services_middleware_iam" {
   }
 }
 
-module "services_middleware_secrets" {
-  source  = "app.terraform.io/charlava/secrets-module/aws"
-  version = "1.1.0"
+# module "services_middleware_secrets" {
+#   source  = "app.terraform.io/charlava/secrets-module/aws"
+#   version = "1.1.0"
 
-  kms_key_id                        = data.kms_key.master.arn
-  role_arns_to_allow_secrets_access = [module.services_middleware_iam.role_arn]
-  secrets                           = var.services_middleware_secrets
-  rsa_decrypt_key_b64               = var.rsa_decrypt_key_b64
-}
+#   kms_key_id                        = data.kms_key.master.arn
+#   role_arns_to_allow_secrets_access = [module.services_middleware_iam.role_arn]
+#   secrets                           = var.services_middleware_secrets
+#   rsa_decrypt_key_b64               = var.rsa_decrypt_key_b64
+# }
