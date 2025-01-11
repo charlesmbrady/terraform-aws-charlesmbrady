@@ -4,7 +4,7 @@
 ###############################################################################
 
 # FIXME: should this JUST be a var?
-data "kms_key" "master" {
+data "aws_kms_key" "master" {
   key_id = var.kms_key_id
 }
 

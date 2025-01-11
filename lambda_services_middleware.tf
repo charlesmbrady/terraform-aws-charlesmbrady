@@ -15,7 +15,7 @@ module "services_middleware_lambda" {
   app_name = local.services_middleware_app_name
 
   iam_permissions_boundary_policy_arn = data.aws_iam_policy.role_permissions_boundary.arn
-  cloudwatch_log_kms_key_arn          = data.kms_key.master.arn
+  cloudwatch_log_kms_key_arn          = data.aws_kms_key.master.arn
   attach_to_vpc                       = false
   create_with_stub                    = true
   create_api_gateway_integration      = true
@@ -45,7 +45,7 @@ module "services_middleware_iam" {
   template           = file("../../iam_policies/lambda_common.json")
 
   role_vars = {
-    kms_key_id     = data.kms_key.master.arn
+    kms_key_id     = data.aws_kms_key.master.arn
   }
 }
 
@@ -53,7 +53,7 @@ module "services_middleware_iam" {
 #   source  = "app.terraform.io/charlava/secrets-module/aws"
 #   version = "1.1.0"
 
-#   kms_key_id                        = data.kms_key.master.arn
+#   kms_key_id                        = data.aws_kms_key.master.arn
 #   role_arns_to_allow_secrets_access = [module.services_middleware_iam.role_arn]
 #   secrets                           = var.services_middleware_secrets
 #   rsa_decrypt_key_b64               = var.rsa_decrypt_key_b64
