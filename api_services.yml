@@ -1,0 +1,95 @@
+openapi: '3.0.1'
+info:
+  title: 'ServicesAPI'
+servers:
+  - url: 'https://api.${services_api_domain}'
+paths:
+  /services/{proxy+}:
+    options:
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: 200 response
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      x-amazon-apigateway-integration:
+        type: mock
+        responses:
+          default:
+            statusCode: '200'
+            responseParameters:
+              method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        requestTemplates:
+          application/json: '{"statusCode": 200}'
+        passthroughBehavior: when_no_match
+      x-amazon-apigateway-any-method:
+        security:
+          - CognitoUserPoolAuthorizer: []
+        parameters:
+          - name: proxy
+            in: path
+            required: true
+            type: string
+        responses: {}
+        x-amazon-apigateway-integration:
+          type: aws_proxy
+          httpMethod: POST
+          uri: arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambda_services_middleware_arn}/invocations
+          responses:
+            default:
+              statusCode: '200'
+          passthroughBehavior: when_no_match
+          timeoutInMillis: 29000
+          cacheNamespace: 74wtne
+          cacheKeyParameters:
+            - method.request.path.proxy
+          contentHandling: CONVERT_TO_TEXT
+components:
+  schemas:
+    Empty:
+      title: 'Empty Schema'
+      type: 'object'
+    securitySchemes:
+      api_key:
+        type: 'apiKey'
+        name: 'x-api-key'
+        in: 'header'
+      CognitoUserPoolAuthorizer:
+        type: 'apiKey'
+        name: 'Authorization'
+        in: 'header'
+        x-amazon-apigateway-authtype: 'cognito_user_pools'
+        x-amazon-apigateway-authorizer:
+          providerARNs:
+            - '${cognito_user_pool_arn}'
+          type: 'cognito_user_pools'
+x-amazon-apigateway-gateway-responses:
+  DEFAULT_5XX:
+    responseParameters:
+      gatewayresponse.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+      gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+      gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+  DEFAULT_4XX:
+    responseParameters:
+      gatewayresponse.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+      gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+      gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
