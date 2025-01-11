@@ -25,7 +25,7 @@ resource "aws_route53_record" "apigateway_certificate_validation" {
       name    = dvo.resource_record_name
       record  = dvo.resource_record_value
       type    = dvo.resource_record_type
-      zone_id = module.charlava_services.hosted_zone_id
+      zone_id = module.charlesmbrady_services.hosted_zone_id
     }
   }
 
@@ -41,7 +41,7 @@ resource "aws_route53_record" "apigateway_certificate_validation" {
 resource "aws_route53_record" "api" {
   name    = aws_api_gateway_domain_name.api_domain_name.domain_name
   type    = "A"
-  zone_id = module.charlava_services.hosted_zone_id
+  zone_id = module.charlesmbrady_services.hosted_zone_id
 
   alias {
     evaluate_target_health = true
@@ -57,7 +57,7 @@ resource "aws_route53_record" "api" {
 resource "aws_route53_record" "api_aaaa" {
   name    = aws_api_gateway_domain_name.api_domain_name.domain_name
   type    = "AAAA"
-  zone_id = module.charlava_services.hosted_zone_id
+  zone_id = module.charlesmbrady_services.hosted_zone_id
 
   alias {
     evaluate_target_health = true
