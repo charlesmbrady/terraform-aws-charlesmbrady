@@ -1,5 +1,5 @@
 module "services_api" {
-  source  = "../modules/api_gateway"
+  source  = "../../modules/api_gateway"
 
   api_name       = var.services_api_name
   api_stage_name = var.services_api_stage_name
@@ -10,7 +10,7 @@ module "services_api" {
   create_api_key = true
   environment_tag = var.environment_tag
 
-  api_template = file("../api_services.yml")
+  api_template = file("../../api_services.yml")
   api_template_vars = {
     services_api_domain_name = var.services_api_domain_name
     cognito_user_pool_arn = aws_cognito_user_pool.charlesmbrady.arn
