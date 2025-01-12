@@ -17,3 +17,10 @@ variable "account_id" {
   type        = string
   description = "An AWS cli profile to use for authentication if running from a workstation."
 }
+
+variable "rsa_decrypt_key_b64" {
+  type        = string
+  description = "The base64 encoded private key to use for decryption."
+  default = null
+  sensitive = true
+}
