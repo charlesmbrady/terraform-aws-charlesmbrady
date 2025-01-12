@@ -83,7 +83,7 @@ variable "cognito_user_pool_name" {
 # /* -------------------------------------------------------------------------- */
 variable "charlesmbrady_services_app_domain_name" {
   type        = string
-  description = "The name of the services app services.charlesmbrady.com"
+  description = "The name of the services app services.charlesmbrady.com or services-dev.charlesmbrady.com for example"
 }
 
 ###############################################################################
