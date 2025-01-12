@@ -6,6 +6,11 @@ variable "kms_key_id" {
   type        = string
   description = "The id of the KMS key to use for encryption."
 }
+
+variable "rsa_decrypt_key_b64" {
+  type        = string
+  description = "The base64 encoded private key to use for decryption."
+}
 ###############################################################################
 ## Regions and Availability zones
 ###############################################################################
@@ -125,4 +130,9 @@ variable "services_api_logging_level" {
 variable "services_middleware_environment_variables" {
   type        = map(any)
   description = "Environment variables for the services middleware lambda"
+}
+
+variable "services_middleware_secrets" {
+  type        = map(any)
+  description = "Secrets for the services middleware lambda"
 }
