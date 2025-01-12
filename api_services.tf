@@ -9,7 +9,7 @@ module "services_api" {
   api_metrics_enabled = var.services_api_metrics_enabled
   api_logging_level = var.services_api_logging_level
   create_api_key = true
-  environment_tag = var.environment_tag
+  role_permissions_boundary_policy_name = "AdministratorAccess" #TODO: Replace with more restrictive
 
   api_template = file("../../api_services.yml")
   api_template_vars = {

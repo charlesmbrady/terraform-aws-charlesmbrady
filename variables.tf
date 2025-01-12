@@ -121,3 +121,8 @@ variable "services_api_logging_level" {
   description = "(Optional) Specifies the logging level for this method, which effects the log entries pushed to Amazon CloudWatch Logs. The available levels are OFF, ERROR, and INFO."
   default     = "OFF"
 }
+
+variable "services_middleware_environment_variables" {
+  type        = map(any)
+  description = "Environment variables for the services middleware lambda"
+}
