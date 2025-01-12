@@ -37,9 +37,10 @@ module "main" {
   # /* ------------------------------ Services App ------------------------------ */
   charlesmbrady_services_app_domain_name = "services-dev.charlesmbrady.com"
   
-  # services_middleware_environment_variables = {
-  #   EXAMPLE_ENV_VAR = "example"
-  # }
+  services_middleware_environment_variables = {
+    EXAMPLE_ENV_VAR = "example"
+  }
+  
   # services_middleware_secrets = {
   #   EXAMPLE_ENV_VAR = {
   #     encrypted_b64 = ["as;dlkfjasldkfjasdflkj=="]
