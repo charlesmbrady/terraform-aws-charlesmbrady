@@ -41,6 +41,12 @@ data "aws_availability_zone" "primary" {
 ## Route 53
 ###############################################################################
 
+# TODO: could remove this datasource, update the output of the cloudfront module to user the actually hosted zone id output instead of cloudfronts native one which causes issues
+# Find the hosted zone for the domain
+data "aws_route53_zone" "charlesmbrady_services" {
+  name = var.charlesmbrady_services_app_domain_name
+}
+
 ###############################################################################
 ## GITHUB OIDC provider
 ###############################################################################
