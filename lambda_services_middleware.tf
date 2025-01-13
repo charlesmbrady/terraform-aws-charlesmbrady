@@ -8,7 +8,7 @@ locals {
 
 module "services_middleware_lambda" {
   source  = "app.terraform.io/charlava/lambda-module/aws"
-  version = "1.2.7"
+  version = "1.2.8"
 
 
   name     = local.services_middleware_name
