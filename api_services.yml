@@ -41,25 +41,25 @@ paths:
         requestTemplates:
           application/json: '{"statusCode": 200}'
         passthroughBehavior: when_no_match
-      x-amazon-apigateway-any-method:
-        security:
-          - CognitoUserPoolAuthorizer: []
-        parameters:
-          - name: proxy
-            in: path
-            required: true
-            type: string
-        responses: {}
+    x-amazon-apigateway-any-method:
+      security:
+        - CognitoUserPoolAuthorizer: []
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          type: string
+      responses: {}
       x-amazon-apigateway-integration:
         type: aws_proxy
-        httpMethod: ANY
+        httpMethod: POST
         uri: arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambda_services_middleware_arn}/invocations
         responses:
           default:
             statusCode: '200'
         passthroughBehavior: when_no_match
         timeoutInMillis: 29000
-        cacheNamespace: 74wtne
+        cacheNamespace: 7jtq04
         cacheKeyParameters:
           - method.request.path.proxy
         contentHandling: CONVERT_TO_TEXT
