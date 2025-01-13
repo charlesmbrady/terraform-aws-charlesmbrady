@@ -35,4 +35,5 @@ resource "aws_route53_record" "sso_aaaa" {
 resource "aws_cognito_user_pool_domain" "charlesmbrady" {
   domain = aws_route53_zone.sso.name
   user_pool_id = aws_cognito_user_pool.charlesmbrady.id
+    certificate_arn = aws_acm_certificate.sso.arn
 }
