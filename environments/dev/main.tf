@@ -30,6 +30,7 @@ module "main" {
 
   # /* ------------------------------ Cognito User Pool ------------------------------ */
   cognito_user_pool_name = "charlesmbrady-dev"
+  sso_domain_name = "auth-dev.charlesmbrady.com"
   
   # /* --------------------------- Charlesmbrady Website --------------------------- */
   charlesmbrady_website_domain_name = "dev.charlesmbrady.com"

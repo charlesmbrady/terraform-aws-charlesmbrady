@@ -136,3 +136,8 @@ variable "services_middleware_secrets" {
   type        = map(any)
   description = "Secrets for the services middleware lambda"
 }
+
+variable "sso_domain_name" {
+  type        = string
+  description = "The domain name for the SSO service"
+}
