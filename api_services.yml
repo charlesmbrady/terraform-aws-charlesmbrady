@@ -52,7 +52,7 @@ paths:
         responses: {}
       x-amazon-apigateway-integration:
         type: aws_proxy
-        httpMethod: POST
+        httpMethod: ANY
         uri: arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambda_services_middleware_arn}/invocations
         responses:
           default:
