@@ -25,5 +25,5 @@ resource "aws_api_gateway_authorizer" "services_api_cognito_authorizer" {
   name                   = "CognitoUserPoolAuthorizer"
   rest_api_id            = module.services_api.api_gateway_id
   type                   = "COGNITO_USER_POOLS"
-  provider_arns          = [aws_cognito_user_pool_domain.sso.arn]
+  provider_arns          = [aws_cognito_user_pool.sso.arn]
 }
