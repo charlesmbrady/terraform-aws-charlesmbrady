@@ -50,38 +50,38 @@ paths:
             required: true
             type: string
         responses: {}
-        x-amazon-apigateway-integration:
-          type: aws_proxy
-          httpMethod: POST
-          uri: arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambda_services_middleware_arn}/invocations
-          responses:
-            default:
-              statusCode: '200'
-          passthroughBehavior: when_no_match
-          timeoutInMillis: 29000
-          cacheNamespace: 74wtne
-          cacheKeyParameters:
-            - method.request.path.proxy
-          contentHandling: CONVERT_TO_TEXT
+      x-amazon-apigateway-integration:
+        type: aws_proxy
+        httpMethod: POST
+        uri: arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambda_services_middleware_arn}/invocations
+        responses:
+          default:
+            statusCode: '200'
+        passthroughBehavior: when_no_match
+        timeoutInMillis: 29000
+        cacheNamespace: 74wtne
+        cacheKeyParameters:
+          - method.request.path.proxy
+        contentHandling: CONVERT_TO_TEXT
 components:
   schemas:
     Empty:
       title: 'Empty Schema'
       type: 'object'
-    securitySchemes:
-      api_key:
-        type: 'apiKey'
-        name: 'x-api-key'
-        in: 'header'
-      CognitoUserPoolAuthorizer:
-        type: 'apiKey'
-        name: 'Authorization'
-        in: 'header'
-        x-amazon-apigateway-authtype: 'cognito_user_pools'
-        x-amazon-apigateway-authorizer:
-          providerARNs:
-            - '${cognito_user_pool_arn}'
-          type: 'cognito_user_pools'
+  securitySchemes:
+    api_key:
+      type: 'apiKey'
+      name: 'x-api-key'
+      in: 'header'
+    CognitoUserPoolAuthorizer:
+      type: 'apiKey'
+      name: 'Authorization'
+      in: 'header'
+      x-amazon-apigateway-authtype: 'cognito_user_pools'
+      x-amazon-apigateway-authorizer:
+        providerARNs:
+          - '${cognito_user_pool_arn}'
+        type: 'cognito_user_pools'
 x-amazon-apigateway-gateway-responses:
   DEFAULT_5XX:
     responseParameters:
