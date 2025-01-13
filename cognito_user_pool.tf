@@ -9,18 +9,18 @@ resource "aws_cognito_user_pool" "charlesmbrady" {
     mutable             = true
     required            = true
   }
-  # schema {
-  #   name                = "name"
-  #   attribute_data_type = "String"
-  #   mutable             = true
-  #   required            = true
-  # }
-  # schema {
-  #   name                = "phone_number"
-  #   attribute_data_type = "String"
-  #   mutable             = true
-  #   required            = true
-  # }
+  schema {
+    name                = "name"
+    attribute_data_type = "String"
+    mutable             = true
+    required            = false
+  }
+  schema {
+    name                = "phone_number"
+    attribute_data_type = "String"
+    mutable             = true
+    required            = false
+  }
   password_policy {
     minimum_length    = 8
     require_lowercase = true
