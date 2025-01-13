@@ -16,5 +16,6 @@ module "services_api" {
     services_api_domain_name = var.services_api_domain_name
     cognito_user_pool_arn = aws_cognito_user_pool.charlesmbrady.arn
     lambda_services_middleware_arn = module.services_middleware_lambda.function_arn
+    region = data.aws_region.main.name
   }
 }
