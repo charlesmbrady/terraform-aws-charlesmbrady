@@ -13,13 +13,13 @@ resource "aws_cognito_user_pool" "charlesmbrady" {
     name                = "name"
     attribute_data_type = "String"
     mutable             = true
-    required            = false
+    required            = true
   }
   schema {
     name                = "phone_number"
     attribute_data_type = "String"
     mutable             = true
-    required            = false
+    required            = true
   }
   password_policy {
     minimum_length    = 8
