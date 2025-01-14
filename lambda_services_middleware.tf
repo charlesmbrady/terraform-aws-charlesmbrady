@@ -48,13 +48,3 @@ module "services_middleware_iam" {
     kms_key_id     = data.aws_kms_key.master.arn
   }
 }
-
-module "services_middleware_secrets" {
-  source  = "app.terraform.io/charlava/secrets-module/aws"
-  version = "1.1.0"
-
-  kms_key_id                        = data.aws_kms_key.master.arn
-  role_arns_to_allow_secrets_access = [module.services_middleware_iam.role_arn]
-  secrets                           = var.services_middleware_secrets
-  rsa_decrypt_key_b64               = var.rsa_decrypt_key_b64
-}
