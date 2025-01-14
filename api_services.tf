@@ -22,7 +22,7 @@ module "services_api" {
 
 # Cognito Authorizer
 resource "aws_api_gateway_authorizer" "services_api_cognito_authorizer" {
-  name                   = "CognitoUserPoolAuthorizer"
+  name                   = "CognitoUserPoolAuthorizer-${var.environment_tag}"
   rest_api_id            = module.services_api.rest_api_id
   type                   = "COGNITO_USER_POOLS"
   provider_arns          = [aws_cognito_user_pool.charlesmbrady.arn]

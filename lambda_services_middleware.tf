@@ -1,9 +1,7 @@
 locals {
-  services_middleware_name     = "services_middleware"
-  services_middleware_app_name = "services-middleware"
-  services_middleware_secrets_env_vars = {
-    for k, v in module.services_middleware_secrets.secret_versions : "${tostring(k)}_SECRET_ARN" => tostring(v["arn"])
-  }
+  services_middleware_app_base_name = "services-middleware"
+  services_middleware_name     = "charlesmbrady_${var.environment_tag}_services_middleware"
+  services_middleware_app_name = "charlesmbrady-${var.environment_tag}-services-middleware"
 }
 
 module "services_middleware_lambda" {
@@ -13,6 +11,7 @@ module "services_middleware_lambda" {
 
   name     = local.services_middleware_name
   app_name = local.services_middleware_app_name
+  handler  = "${local.services_middleware_app_base_name}/main.handler"
 
   iam_permissions_boundary_policy_arn = data.aws_iam_policy.role_permissions_boundary.arn
   cloudwatch_log_kms_key_arn          = data.aws_kms_key.master.arn
@@ -30,7 +29,6 @@ module "services_middleware_lambda" {
   timeout                             = 900 # use whole 15m
 
   environment_variables = merge(
-    local.services_middleware_secrets_env_vars,
     var.services_middleware_environment_variables
   )
 }
