@@ -18,7 +18,7 @@ module "main" {
   }
 
   # Environment and naming
-  kms_key_id = ""
+  kms_key_id = "fd098854-749f-488e-8cb3-1248c0479054"
   environment_tag = "Test"
   rsa_decrypt_key_b64 = var.rsa_decrypt_key_test_b64
 
