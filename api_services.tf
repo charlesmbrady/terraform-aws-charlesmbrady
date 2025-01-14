@@ -1,3 +1,7 @@
+locals {
+  cognitoAuthorizerName = "CognitoUserPoolAuthorizer-${var.environment_tag}"
+}
+
 module "services_api" {
   source  = "app.terraform.io/charlava/apigw-module/aws"
   version = "1.2.0"
@@ -17,6 +21,7 @@ module "services_api" {
     cognito_user_pool_arn = aws_cognito_user_pool.charlesmbrady.arn
     lambda_services_middleware_arn = module.services_middleware_lambda.function_arn
     region = data.aws_region.main.name
+    cognitoAuthorizerName = local.cognitoAuthorizerName
   }
 }
 

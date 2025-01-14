@@ -43,7 +43,7 @@ paths:
         passthroughBehavior: when_no_match
     x-amazon-apigateway-any-method:
       security:
-        - CognitoUserPoolAuthorizer: []
+        - ${cognitoAuthorizerName}: []
       parameters:
         - name: proxy
           in: path
@@ -73,7 +73,7 @@ components:
       type: 'apiKey'
       name: 'x-api-key'
       in: 'header'
-    CognitoUserPoolAuthorizer:
+    ${cognitoAuthorizerName}:
       type: 'apiKey'
       name: 'Authorization'
       in: 'header'
