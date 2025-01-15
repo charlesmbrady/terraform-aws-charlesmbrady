@@ -28,7 +28,7 @@ module "main" {
   services_api_logging_level = "OFF"
 
 # Cognito
-  cognito_user_pool_name = "charlesmbrady"
+  cognito_user_pool_name = "charlesmbrady-prod"
   sso_domain_name = "auth.charlesmbrady.com"
   
   # /* --------------------------- Charlesmbrady Website --------------------------- */
