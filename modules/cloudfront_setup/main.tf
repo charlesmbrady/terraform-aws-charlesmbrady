@@ -1,6 +1,20 @@
 locals {
   name_env_prefix = "${lower(var.root_project_name_prefix)}-${lower(var.environment)}"
 }
+
+resource "aws_route53_record" "test_alias" {
+  zone_id = var.hosted_zone_id
+  name    = "test.charlesmbrady.com"
+  type    = "A"
+
+  alias {
+    name                   = aws_cloudfront_distribution.cf.domain_name
+    zone_id                = aws_cloudfront_distribution.cf.hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
+
 #############################
 ## S3 Bucket for the Environment
 #############################
