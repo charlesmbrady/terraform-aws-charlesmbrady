@@ -21,3 +21,8 @@ variable "hosted_zone_id" {
 variable "root_project_name_prefix" {
   type = string
 }
+
+variable "alias_name" {
+  type = string
+  
+}

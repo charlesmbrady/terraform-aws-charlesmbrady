@@ -2,9 +2,9 @@ locals {
   name_env_prefix = "${lower(var.root_project_name_prefix)}-${lower(var.environment)}"
 }
 
-resource "aws_route53_record" "test_alias" {
+resource "aws_route53_record" "alias" { #TODO: rename this to be more generic "alias"
   zone_id = var.hosted_zone_id
-  name    = "test.charlesmbrady.com"
+  name    = var.alias_name
   type    = "A"
 
   alias {

@@ -161,3 +161,8 @@ variable "root_project_name_prefix" {
   type        = string
   description = "The root project name prefix"
 }
+
+variable "alias_name" {
+  type        = string
+  description = "The alias name for the custom domain"
+}

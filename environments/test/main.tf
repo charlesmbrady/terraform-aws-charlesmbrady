@@ -27,6 +27,7 @@ module "main" {
   domain_aliases = ["test.charlesmbrady.com", "auth-test.charlesmbrady.com", "api-test.charlesmbrady.com"]
   projects = ["portfolio/project1", "portfolio/project2"]
   hosted_zone_id = data.aws_route53_zone.main_zone.id
+  alias_name = "test.charlesmbrady.com"
   # /* ------------------------------ Services API ------------------------------ */
   # services_api_name = "charlesmbrady-ServicesAPI-Test"
   # services_api_domain_name = "services-test.charlesmbrady.com"
