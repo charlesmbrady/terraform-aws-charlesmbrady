@@ -54,85 +54,110 @@ variable "tags" {
   description = "Tags to apply to all resources that support them."
 }
 
-###############################################################################
+# ###############################################################################
 
-variable "charlesmbrady_website_domain_name" {
+# variable "charlesmbrady_website_domain_name" {
+#   type        = string
+#   description = "The domain name for the website (can be a root domain or subdomain or a multilevel subdomain)"
+# }
+
+# locals {
+#   tags = merge({
+#     "Name" : var.name_prefix
+#     "Environment" : var.environment_tag
+#     },
+#     var.tags
+#   )
+# }
+
+# ###############################################################################
+# #### Cognito User Pool
+# ###############################################################################
+# variable "cognito_user_pool_name" {
+#   type        = string
+#   description = "The name of the cognito user pool"
+# }
+
+# # /* -------------------------------------------------------------------------- */
+# # /*                                Services App                                */
+# # /* -------------------------------------------------------------------------- */
+# variable "charlesmbrady_services_app_domain_name" {
+#   type        = string
+#   description = "The name of the services app services.charlesmbrady.com or services-dev.charlesmbrady.com for example"
+# }
+
+# ###############################################################################
+# #### Servies API
+# ###############################################################################
+
+# variable "services_api_name" {
+#   type        = string
+#   description = "The name of the 'services' apigateway endpoint"
+# }
+
+# variable "services_api_stage_name" {
+#   type        = string
+#   description = "The name of the 'services' apigateway stage"
+# }
+
+# variable "services_api_domain_name" {
+#   type        = string
+#   description = "The custom domain name for the 'services' apigateway endpoint"
+# }
+
+# variable "services_api_throttling_rate_limit" {
+#   type        = number
+#   description = "API Gateway total requests across all APIs within a REST endpoint"
+# }
+
+# variable "services_api_throttling_burst_limit" {
+#   type        = number
+#   description = "API Gateway total concurrent connections allowed for all APIs within a REST endpoint"
+# }
+
+# variable "services_api_metrics_enabled" {
+#   type        = bool
+#   description = "Enable detailed metrics for the API Gateway"
+#   default    = false
+# }
+
+# variable "services_api_logging_level" {
+#   type        = string
+#   description = "(Optional) Specifies the logging level for this method, which effects the log entries pushed to Amazon CloudWatch Logs. The available levels are OFF, ERROR, and INFO."
+#   default     = "OFF"
+# }
+
+# variable "services_middleware_environment_variables" {
+#   type        = map(any)
+#   description = "Environment variables for the services middleware lambda"
+# }
+
+# variable "sso_domain_name" {
+#   type        = string
+#   description = "The domain name for the SSO service"
+# }
+
+variable "certificate_arn" {
   type        = string
-  description = "The domain name for the website (can be a root domain or subdomain or a multilevel subdomain)"
+  description = "The ARN of the ACM certificate to use for the custom domain"
 }
 
-locals {
-  tags = merge({
-    "Name" : var.name_prefix
-    "Environment" : var.environment_tag
-    },
-    var.tags
-  )
+variable "domain_aliases" {
+  type        = list(string)
+  description = "A list of domain aliases to use for the custom domain"
 }
 
-###############################################################################
-#### Cognito User Pool
-###############################################################################
-variable "cognito_user_pool_name" {
+variable "projects" {
+  type        = list(string)
+  description = "A list of projects to use for the custom domain"
+}
+
+variable "hosted_zone_id" {
   type        = string
-  description = "The name of the cognito user pool"
+  description = "The hosted zone id for the custom domain"
 }
 
-# /* -------------------------------------------------------------------------- */
-# /*                                Services App                                */
-# /* -------------------------------------------------------------------------- */
-variable "charlesmbrady_services_app_domain_name" {
+variable "root_project_name_prefix" {
   type        = string
-  description = "The name of the services app services.charlesmbrady.com or services-dev.charlesmbrady.com for example"
-}
-
-###############################################################################
-#### Servies API
-###############################################################################
-
-variable "services_api_name" {
-  type        = string
-  description = "The name of the 'services' apigateway endpoint"
-}
-
-variable "services_api_stage_name" {
-  type        = string
-  description = "The name of the 'services' apigateway stage"
-}
-
-variable "services_api_domain_name" {
-  type        = string
-  description = "The custom domain name for the 'services' apigateway endpoint"
-}
-
-variable "services_api_throttling_rate_limit" {
-  type        = number
-  description = "API Gateway total requests across all APIs within a REST endpoint"
-}
-
-variable "services_api_throttling_burst_limit" {
-  type        = number
-  description = "API Gateway total concurrent connections allowed for all APIs within a REST endpoint"
-}
-
-variable "services_api_metrics_enabled" {
-  type        = bool
-  description = "Enable detailed metrics for the API Gateway"
-  default    = false
-}
-
-variable "services_api_logging_level" {
-  type        = string
-  description = "(Optional) Specifies the logging level for this method, which effects the log entries pushed to Amazon CloudWatch Logs. The available levels are OFF, ERROR, and INFO."
-  default     = "OFF"
-}
-
-variable "services_middleware_environment_variables" {
-  type        = map(any)
-  description = "Environment variables for the services middleware lambda"
-}
-
-variable "sso_domain_name" {
-  type        = string
-  description = "The domain name for the SSO service"
+  description = "The root project name prefix"
 }

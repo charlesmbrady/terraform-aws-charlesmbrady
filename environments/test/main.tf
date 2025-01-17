@@ -21,28 +21,60 @@ module "main" {
   kms_key_id = "fd098854-749f-488e-8cb3-1248c0479054"
   environment_tag = "Test"
   rsa_decrypt_key_b64 = var.rsa_decrypt_key_test_b64
+  root_project_name_prefix = "charlesmbrady"
 
+  certificate_arn = "arn:aws:acm:us-east-1:632785536297:certificate/3ca27788-124e-425b-9606-815b81d3326c"
+  domain_aliases = ["test.charlesmbrady.com", "auth-test.charlesmbrady.com", "api-test.charlesmbrady.com"]
+  projects = ["portfolio/project1", "portfolio/project2"]
+  hosted_zone_id = data.aws_route53_zone.main_zone.id
   # /* ------------------------------ Services API ------------------------------ */
-  services_api_name = "charlesmbrady-ServicesAPI-Test"
-  services_api_domain_name = "services-test.charlesmbrady.com"
-  services_api_stage_name = "test"
-  services_api_throttling_rate_limit = 5
-  services_api_throttling_burst_limit = 10
-  services_api_metrics_enabled = false
-  services_api_logging_level = "OFF"
+  # services_api_name = "charlesmbrady-ServicesAPI-Test"
+  # services_api_domain_name = "services-test.charlesmbrady.com"
+  # services_api_stage_name = "test"
+  # services_api_throttling_rate_limit = 5
+  # services_api_throttling_burst_limit = 10
+  # services_api_metrics_enabled = false
+  # services_api_logging_level = "OFF"
 
-  # /* ------------------------------ Cognito User Pool ------------------------------ */
-  cognito_user_pool_name = "charlesmbrady-test"
-  sso_domain_name = "auth-test.charlesmbrady.com"
+  # # /* ------------------------------ Cognito User Pool ------------------------------ */
+  # cognito_user_pool_name = "charlesmbrady-test"
+  # sso_domain_name = "auth-test.charlesmbrady.com"
 
-  # /* --------------------------- Charlesmbrady Website --------------------------- */
-  charlesmbrady_website_domain_name = "test.charlesmbrady.com"
+  # # /* --------------------------- Charlesmbrady Website --------------------------- */
+  # charlesmbrady_website_domain_name = "test.charlesmbrady.com"
 
-  # /* ------------------------------ Services App ------------------------------ */
-  charlesmbrady_services_app_domain_name = "services-test.charlesmbrady.com"
+  # # /* ------------------------------ Services App ------------------------------ */
+  # charlesmbrady_services_app_domain_name = "services-test.charlesmbrady.com"
   
-  services_middleware_environment_variables = {
-    EXAMPLE_ENV_VAR = "example"
-  }
+  # services_middleware_environment_variables = {
+  #   EXAMPLE_ENV_VAR = "example"
+  # }
 
 }
+
+
+# variable "environment" {
+#   default = "test"
+# }
+# variable "certificate_arn" {
+#   default = "arn:aws:acm:us-east-1:123456789012:certificate/your-test-cert"
+# }
+# variable "domain_aliases" {
+#   default = ["test.charlesmbrady.com", "auth-test.charlesmbrady.com", "api-test.charlesmbrady.com"]
+# }
+# variable "projects" {
+#   default = ["portfolio/project1", "portfolio/project2"]
+# }
+# variable "hosted_zone_id" {
+#   default = "ZXXXXXXXXXXXXXXXXX"  # Likely same zone ID since it's same root domain but subdomain records differ
+# }
+
+# module "cloudfront_setup" {
+#   source = "../../modules/cloudfront_setup"
+
+#   environment      = var.environment
+#   certificate_arn  = var.certificate_arn
+#   domain_aliases   = var.domain_aliases
+#   projects         = var.projects
+#   hosted_zone_id   = var.hosted_zone_id
+# }
