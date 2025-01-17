@@ -1,5 +1,5 @@
 locals {
-  name_env_prefix = "${var.root_project_name_prefix}-${var.environment}"
+  name_env_prefix = "${lower(var.root_project_name_prefix)}-${lower(var.environment)}"
 }
 #############################
 ## S3 Bucket for the Environment
