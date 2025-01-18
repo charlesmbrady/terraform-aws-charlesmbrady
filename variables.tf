@@ -166,3 +166,9 @@ variable "alias_name" {
   type        = string
   description = "The alias name for the custom domain"
 }
+
+variable "lambda_edge_rewrite_arn" {
+  description = "ARN of the Lambda@Edge function for rewriting URIs"
+  type        = string
+  default     = "arn:aws:lambda:us-east-1:632785536297:function:portfolio_rewrite_edge"  // Provide a default or require it from caller
+}

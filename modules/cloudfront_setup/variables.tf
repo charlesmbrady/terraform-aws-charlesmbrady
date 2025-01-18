@@ -26,3 +26,8 @@ variable "alias_name" {
   type = string
   
 }
+
+variable "lambda_edge_rewrite_arn" {
+  description = "ARN of the Lambda@Edge function for rewriting URIs"
+  type        = string
+}

@@ -90,30 +90,37 @@ resource "aws_cloudfront_distribution" "cf" {
   }
 
   dynamic "ordered_cache_behavior" {
-    for_each = var.projects
-    #explain this here
-    #for each project, create a cache behavior, which basically routes the request to the correct s3 bucket.  So if the request is for /project1/*, it will route to the project1 bucket
+  for_each = var.projects
+  content {
+    path_pattern           = "/${ordered_cache_behavior.value}/*"
+    target_origin_id       = "${local.name_env_prefix}--s3-origin"
+    viewer_protocol_policy = "redirect-to-https"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD", "OPTIONS"]
 
-    content {
-      path_pattern           = "/${ordered_cache_behavior.value}/*"
-      target_origin_id       = "${local.name_env_prefix}--s3-origin"
-      viewer_protocol_policy = "redirect-to-https"
-      allowed_methods        = ["GET", "HEAD", "OPTIONS"]
-      cached_methods         = ["GET", "HEAD", "OPTIONS"]
-
-      forwarded_values {
-        query_string = false
-        cookies {
-          forward = "none"
-        }
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
       }
+    }
 
-      min_ttl     = 0
-      default_ttl = 86400
-      max_ttl     = 31536000
-      compress    = true
+    min_ttl     = 0
+    default_ttl = 86400
+    max_ttl     = 31536000
+    compress    = true
+
+    dynamic "lambda_function_association" {
+      for_each = var.lambda_edge_rewrite_arn != "" ? [1] : []
+      content {
+        event_type   = "origin-request"
+        lambda_arn   = var.lambda_edge_rewrite_arn
+        include_body = false
+      }
     }
   }
+}
+
 
   # Custom error responses for SPA deep linking
   custom_error_response {
