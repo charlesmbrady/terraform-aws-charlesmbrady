@@ -8,5 +8,6 @@ module "charlesmbrady" {
   hosted_zone_id   = var.hosted_zone_id
   root_project_name_prefix = var.root_project_name_prefix
   alias_name = var.alias_name
+  lambda_edge_rewrite_arn = var.lambda_edge_rewrite_arn
 
 }
