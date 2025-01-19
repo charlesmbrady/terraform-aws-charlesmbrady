@@ -22,7 +22,7 @@ module "main" {
 
   certificate_arn = "arn:aws:acm:us-east-1:632785536297:certificate/3ca27788-124e-425b-9606-815b81d3326c"
   domain_aliases = ["test.charlesmbrady.com", "auth-test.charlesmbrady.com", "api-test.charlesmbrady.com"]
-  projects = ["portfolio/project1", "portfolio/project2"]
+  projects = ["portfolio/mockdat", "portfolio/self-driving-car", "portfolio/hotkeys-trainer"]
   hosted_zone_id = data.aws_route53_zone.main_zone.id
   alias_name = "charlesmbrady.com"
 
