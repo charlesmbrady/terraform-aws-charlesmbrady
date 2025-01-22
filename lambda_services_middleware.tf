@@ -41,8 +41,8 @@ module "services_middleware_iam" {
 
   role_name          = "${local.services_middleware_app_name}-role"
   policy_name        = "${local.services_middleware_app_name}-policy"
-  assume_role_policy = file("../../iam_policies/lambda_assume_role.json")
-  template           = file("../../iam_policies/lambda_common.json")
+  assume_role_policy = "../../iam_policies/lambda_assume_role.json"
+  template           = "../../iam_policies/lambda_common.json"
 
   role_vars = {
     kms_key_id     = var.kms_key_id
