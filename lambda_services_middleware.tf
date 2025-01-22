@@ -14,7 +14,7 @@ module "charlesmbrady_middleware_lambda" {
   handler  = "${local.services_middleware_app_base_name}/main.handler"
 
   iam_permissions_boundary_policy_arn = data.aws_iam_policy.role_permissions_boundary.arn
-  cloudwatch_log_kms_key_arn          = data.aws_kms_key.master.arn
+  cloudwatch_log_kms_key_arn          = var.kms_key_id
   vpc_id                              = null
   subnet_ids                          = []
   attach_to_vpc                       = false
@@ -45,6 +45,6 @@ module "services_middleware_iam" {
   template           = file("../../iam_policies/lambda_common.json")
 
   role_vars = {
-    kms_key_id     = data.aws_kms_key.master.arn
+    kms_key_id     = var.kms_key_id
   }
 }
