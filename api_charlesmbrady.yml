@@ -2,7 +2,7 @@ openapi: '3.0.1'
 info:
   title: 'ServicesAPI'
 servers:
-  - url: 'https://api.${services_api_domain_name}'
+  - url: 'https://${charlesmbrady_api_domain_name}'
 paths:
   /services/{proxy+}:
     options:
