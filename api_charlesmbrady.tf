@@ -4,7 +4,7 @@ locals {
 
 module "charlesmbrady_api" {
   source  = "app.terraform.io/charlava/apigw-module/aws"
-  version = "1.2.0"
+  version = "1.3.0"
 
   api_name       = var.charlesmbrady_api_name
   api_stage_name = var.charlesmbrady_api_stage_name
@@ -15,7 +15,7 @@ module "charlesmbrady_api" {
   create_api_key = true
   role_permissions_boundary_policy_name = "AdministratorAccess" #TODO: Replace with more restrictive
 
-  api_template = file("../../api_charlesmbrady.yml")
+  api_template = "../../api_charlesmbrady.yml"
   api_template_vars = {
     charlesmbrady_api_domain_name = var.charlesmbrady_api_domain_name
     cognito_user_pool_arn = aws_cognito_user_pool.charlesmbrady.arn
