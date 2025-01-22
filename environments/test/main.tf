@@ -33,13 +33,15 @@ module "main" {
   mockdat_root_project_name_prefix = "mockdat"
 
   # /* ------------------------------ Services API ------------------------------ */
-  # services_api_name = "charlesmbrady-ServicesAPI-Test"
-  # services_api_domain_name = "services-test.charlesmbrady.com"
-  # services_api_stage_name = "test"
-  # services_api_throttling_rate_limit = 5
-  # services_api_throttling_burst_limit = 10
-  # services_api_metrics_enabled = false
-  # services_api_logging_level = "OFF"
+  charlesmbrady_api_name = "charlesmbrady-CharlesmbradyAPI-Test"
+  charlesmbrady_api_root_domain_name = "charlesmbrady.com"
+  charlesmbrady_api_domain_name = "charlesmbrady.com"
+  charlesmbrady_api_stage_name = "test"
+  charlesmbrady_api_throttling_rate_limit = 5
+  charlesmbrady_api_throttling_burst_limit = 10
+  charlesmbrady_api_metrics_enabled = false
+  charlesmbrady_api_logging_level = "OFF"
+
 
   # # /* ------------------------------ Cognito User Pool ------------------------------ */
   # cognito_user_pool_name = "charlesmbrady-test"
@@ -51,9 +53,9 @@ module "main" {
   # # /* ------------------------------ Services App ------------------------------ */
   # charlesmbrady_services_app_domain_name = "services-test.charlesmbrady.com"
   
-  # services_middleware_environment_variables = {
-  #   EXAMPLE_ENV_VAR = "example"
-  # }
+  charlesmbrady_middleware_environment_variables = {
+    EXAMPLE_ENV_VAR = "example"
+  }
 
 }
 

@@ -90,47 +90,47 @@ variable "tags" {
 # #### Servies API
 # ###############################################################################
 
-# variable "services_api_name" {
-#   type        = string
-#   description = "The name of the 'services' apigateway endpoint"
-# }
+variable "charlesmbrady_api_name" {
+  type        = string
+  description = "The name of the 'charlesmbrady' apigateway endpoint"
+}
 
-# variable "services_api_stage_name" {
-#   type        = string
-#   description = "The name of the 'services' apigateway stage"
-# }
+variable "charlesmbrady_api_stage_name" {
+  type        = string
+  description = "The name of the 'charlesmbrady' apigateway stage"
+}
 
-# variable "services_api_domain_name" {
-#   type        = string
-#   description = "The custom domain name for the 'services' apigateway endpoint"
-# }
+variable "charlesmbrady_api_domain_name" {
+  type        = string
+  description = "The custom domain name for the 'charlesmbrady' apigateway endpoint"
+}
 
-# variable "services_api_throttling_rate_limit" {
-#   type        = number
-#   description = "API Gateway total requests across all APIs within a REST endpoint"
-# }
+variable "charlesmbrady_api_throttling_rate_limit" {
+  type        = number
+  description = "API Gateway total requests across all APIs within a REST endpoint"
+}
 
-# variable "services_api_throttling_burst_limit" {
-#   type        = number
-#   description = "API Gateway total concurrent connections allowed for all APIs within a REST endpoint"
-# }
+variable "charlesmbrady_api_throttling_burst_limit" {
+  type        = number
+  description = "API Gateway total concurrent connections allowed for all APIs within a REST endpoint"
+}
 
-# variable "services_api_metrics_enabled" {
-#   type        = bool
-#   description = "Enable detailed metrics for the API Gateway"
-#   default    = false
-# }
+variable "charlesmbrady_api_metrics_enabled" {
+  type        = bool
+  description = "Enable detailed metrics for the API Gateway"
+  default    = false
+}
 
-# variable "services_api_logging_level" {
-#   type        = string
-#   description = "(Optional) Specifies the logging level for this method, which effects the log entries pushed to Amazon CloudWatch Logs. The available levels are OFF, ERROR, and INFO."
-#   default     = "OFF"
-# }
+variable "charlesmbrady_api_logging_level" {
+  type        = string
+  description = "(Optional) Specifies the logging level for this method, which effects the log entries pushed to Amazon CloudWatch Logs. The available levels are OFF, ERROR, and INFO."
+  default     = "OFF"
+}
 
-# variable "services_middleware_environment_variables" {
-#   type        = map(any)
-#   description = "Environment variables for the services middleware lambda"
-# }
+variable "charlesmbrady_middleware_environment_variables" {
+  type        = map(any)
+  description = "Environment variables for the charlesmbrady middleware lambda"
+}
 
 # variable "sso_domain_name" {
 #   type        = string
@@ -172,3 +172,8 @@ variable "alias_name" {
   variable mockdat_alias_name {
     type = string
   }
+
+variable "charlesmbrady_api_root_domain_name" {
+  type        = string
+  description = "The domain name for the api gateway root for example 'charlesmbrady.com'"
+}
