@@ -20,7 +20,7 @@ module "charlesmbrady_middleware_lambda" {
   attach_to_vpc                       = false
   create_with_stub                    = true
   create_api_gateway_integration      = true
-  api_gateway_rest_api_id             = module.services_api.rest_api_id
+  api_gateway_rest_api_id             = module.charlesmbrady_api.rest_api_id
   role_arn                            = module.services_middleware_iam.role_arn
   role_name                           = module.services_middleware_iam.role_name
   oidc_provider_arn                   = data.aws_iam_openid_connect_provider.github.arn
