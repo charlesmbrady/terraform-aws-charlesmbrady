@@ -161,3 +161,14 @@ variable "alias_name" {
   type        = string
   description = "The alias name for the custom domain"
 }
+  variable mockdat_domain_aliases {
+    type = list(string)
+  }
+
+  variable mockdat_root_project_name_prefix {
+    type = string
+  }
+
+  variable mockdat_alias_name {
+    type = string
+  }

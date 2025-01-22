@@ -27,6 +27,11 @@ module "main" {
   domain_aliases = ["test.charlesmbrady.com", "auth-test.charlesmbrady.com", "api-test.charlesmbrady.com"]
   hosted_zone_id = data.aws_route53_zone.main_zone.id
   alias_name = "test.charlesmbrady.com"
+
+  mockdat_alias_name = "mockdat-test.charlesmbrady.com"
+  mockdat_domain_aliases = []
+  mockdat_root_project_name_prefix = "charlesmbrady"
+
   # /* ------------------------------ Services API ------------------------------ */
   # services_api_name = "charlesmbrady-ServicesAPI-Test"
   # services_api_domain_name = "services-test.charlesmbrady.com"
