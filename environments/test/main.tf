@@ -29,7 +29,7 @@ module "main" {
   alias_name = "test.charlesmbrady.com"
 
   mockdat_alias_name = "mockdat-test.charlesmbrady.com"
-  mockdat_domain_aliases = []
+  mockdat_domain_aliases = ["mockdat-test.charlesmbrady.com"]
   mockdat_root_project_name_prefix = "mockdat"
 
   # /* ------------------------------ Services API ------------------------------ */
