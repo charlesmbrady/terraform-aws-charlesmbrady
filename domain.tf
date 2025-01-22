@@ -12,7 +12,7 @@ resource "aws_api_gateway_domain_name" "api_domain_name" {
 resource "aws_route53_record" "api" {
   name    = aws_api_gateway_domain_name.api_domain_name.domain_name
   type    = "A"
-  zone_id = data.aws_route53_zone.charlesmbrady.zone_id
+  zone_id = var.hosted_zone_id
 
   alias {
     evaluate_target_health = true
