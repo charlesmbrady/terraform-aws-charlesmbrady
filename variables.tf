@@ -172,8 +172,3 @@ variable "alias_name" {
   variable mockdat_alias_name {
     type = string
   }
-
-variable "charlesmbrady_api_domain_name" {
-  type        = string
-  description = "The domain name for the api gateway root for example 'charlesmbrady.com'"
-}
