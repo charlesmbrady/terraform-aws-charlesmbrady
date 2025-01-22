@@ -1,7 +1,7 @@
 # /* ----------------------------------- API ---------------------------------- */
 resource "aws_api_gateway_domain_name" "api_domain_name" {
-  certificate_arn = aws_acm_certificate_validation.apigateway_certificate.certificate_arn
-  domain_name     = "api.${var.charlesmbrady_api_root_domain_name}"
+  certificate_arn = var.certificate_arn
+  domain_name     = var.charlesmbrady_api_domain_name
   security_policy = "TLS_1_2"
 }
 

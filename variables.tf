@@ -73,10 +73,10 @@ variable "tags" {
 # ###############################################################################
 # #### Cognito User Pool
 # ###############################################################################
-# variable "cognito_user_pool_name" {
-#   type        = string
-#   description = "The name of the cognito user pool"
-# }
+variable "cognito_user_pool_name" {
+  type        = string
+  description = "The name of the cognito user pool"
+}
 
 # # /* -------------------------------------------------------------------------- */
 # # /*                                Services App                                */
@@ -132,10 +132,10 @@ variable "charlesmbrady_middleware_environment_variables" {
   description = "Environment variables for the charlesmbrady middleware lambda"
 }
 
-# variable "sso_domain_name" {
-#   type        = string
-#   description = "The domain name for the SSO service"
-# }
+variable "sso_domain_name" {
+  type        = string
+  description = "The domain name for the SSO service"
+}
 
 variable "certificate_arn" {
   type        = string
@@ -173,7 +173,7 @@ variable "alias_name" {
     type = string
   }
 
-variable "charlesmbrady_api_root_domain_name" {
+variable "charlesmbrady_api_domain_name" {
   type        = string
   description = "The domain name for the api gateway root for example 'charlesmbrady.com'"
 }

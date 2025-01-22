@@ -34,8 +34,7 @@ module "main" {
 
   # /* ------------------------------ Services API ------------------------------ */
   charlesmbrady_api_name = "charlesmbrady-CharlesmbradyAPI-Test"
-  charlesmbrady_api_root_domain_name = "charlesmbrady.com"
-  charlesmbrady_api_domain_name = "charlesmbrady.com"
+  charlesmbrady_api_domain_name = "api-test.charlesmbrady.com"
   charlesmbrady_api_stage_name = "test"
   charlesmbrady_api_throttling_rate_limit = 5
   charlesmbrady_api_throttling_burst_limit = 10
@@ -44,8 +43,8 @@ module "main" {
 
 
   # # /* ------------------------------ Cognito User Pool ------------------------------ */
-  # cognito_user_pool_name = "charlesmbrady-test"
-  # sso_domain_name = "auth-test.charlesmbrady.com"
+  cognito_user_pool_name = "charlesmbrady-test"
+  sso_domain_name = "auth-test.charlesmbrady.com"
 
   # # /* --------------------------- Charlesmbrady Website --------------------------- */
   # charlesmbrady_website_domain_name = "test.charlesmbrady.com"
