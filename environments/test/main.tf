@@ -18,7 +18,7 @@ module "main" {
   }
 
   # Environment and naming
-  kms_key_id = "3958293b-681c-4899-9afa-cdff086d1bf3"
+  kms_key_id = "arn:aws:kms:us-east-1:632785536297:key/fd098854-749f-488e-8cb3-1248c0479054"
   environment_tag = "Test"
   rsa_decrypt_key_b64 = var.rsa_decrypt_key_test_b64
   root_project_name_prefix = "charlesmbrady"
