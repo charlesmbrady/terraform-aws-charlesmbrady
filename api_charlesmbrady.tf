@@ -1,5 +1,5 @@
 locals {
-  cognitoAuthorizerName = "CognitoUserPoolAuthorizer-${var.environment_tag}"
+  cognitoAuthorizerName = "CognitoUserPoolAuthorizer-cmb-${var.environment_tag}"
 }
 
 module "charlesmbrady_api" {
@@ -27,7 +27,7 @@ module "charlesmbrady_api" {
 
 # Cognito Authorizer
 resource "aws_api_gateway_authorizer" "charlesmbrady_api_cognito_authorizer" {
-  name                   = "CognitoUserPoolAuthorizer-${var.environment_tag}"
+  name                   = local.cognitoAuthorizerName
   rest_api_id            = module.charlesmbrady_api.rest_api_id
   type                   = "COGNITO_USER_POOLS"
   provider_arns          = [aws_cognito_user_pool.charlesmbrady.arn]

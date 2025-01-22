@@ -14,7 +14,7 @@ module "main" {
     aws = aws.primary
   }
 
-  kms_key_id = "fd098854-749f-488e-8cb3-1248c0479054"
+  kms_key_id = "3958293b-681c-4899-9afa-cdff086d1bf3"
   environment_tag = "Production"
   rsa_decrypt_key_b64 = var.rsa_decrypt_key_prod_b64
 
