@@ -31,7 +31,7 @@ module "main" {
   mockdat_root_project_name_prefix = "mockdat"
 
 # # /* ------------------------------ Services API ------------------------------ */
-  charlesmbrady_api_name = "charlesmbrady-CharlesmbradyAPI-Test"
+  charlesmbrady_api_name = "charlesmbrady-services-prod"
   charlesmbrady_api_domain_name = "api.charlesmbrady.com"
   charlesmbrady_api_stage_name = "prod"
   charlesmbrady_api_throttling_rate_limit = 5
