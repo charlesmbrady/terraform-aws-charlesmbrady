@@ -24,7 +24,7 @@ module "main" {
   root_project_name_prefix = "charlesmbrady"
 
   certificate_arn = "arn:aws:acm:us-east-1:632785536297:certificate/3ca27788-124e-425b-9606-815b81d3326c"
-  domain_aliases = ["test.charlesmbrady.com"] #TODO: could this substitute for creating these resources elsewhere?
+  domain_aliases = ["test.charlesmbrady.com"]
   hosted_zone_id = data.aws_route53_zone.main_zone.id
   alias_name = "test.charlesmbrady.com"
 
@@ -45,42 +45,9 @@ module "main" {
   # # /* ------------------------------ Cognito User Pool ------------------------------ */
   cognito_user_pool_name = "charlesmbrady-test"
   sso_domain_name = "auth-test.charlesmbrady.com"
-
-  # # /* --------------------------- Charlesmbrady Website --------------------------- */
-  # charlesmbrady_website_domain_name = "test.charlesmbrady.com"
-
-  # # /* ------------------------------ Services App ------------------------------ */
-  # charlesmbrady_services_app_domain_name = "services-test.charlesmbrady.com"
   
   charlesmbrady_middleware_environment_variables = {
     EXAMPLE_ENV_VAR = "example"
   }
 
 }
-
-
-# variable "environment" {
-#   default = "test"
-# }
-# variable "certificate_arn" {
-#   default = "arn:aws:acm:us-east-1:123456789012:certificate/your-test-cert"
-# }
-# variable "domain_aliases" {
-#   default = ["test.charlesmbrady.com", "auth-test.charlesmbrady.com", "api-test.charlesmbrady.com"]
-# }
-# variable "projects" {
-#   default = ["portfolio/project1", "portfolio/project2"]
-# }
-# variable "hosted_zone_id" {
-#   default = "ZXXXXXXXXXXXXXXXXX"  # Likely same zone ID since it's same root domain but subdomain records differ
-# }
-
-# module "cloudfront_setup" {
-#   source = "../../modules/cloudfront_setup"
-
-#   environment      = var.environment
-#   certificate_arn  = var.certificate_arn
-#   domain_aliases   = var.domain_aliases
-#   projects         = var.projects
-#   hosted_zone_id   = var.hosted_zone_id
-# }
