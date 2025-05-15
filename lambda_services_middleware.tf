@@ -48,6 +48,6 @@ module "services_middleware_iam" {
     kms_key_id     = var.kms_key_id
     environment = var.environment_tag
     region      = data.aws_region.main.name
-    account_id = data.aws_caller_identity.current.account_id
+    account_id = data.aws_caller_identity.main.account_id
   }
 }
