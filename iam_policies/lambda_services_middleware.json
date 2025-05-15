@@ -1,0 +1,36 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"],
+      "Resource": "arn:aws:logs:*:*:*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["kms:GenerateDataKey", "kms:Decrypt"],
+      "Resource": "${kms_key_id}"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:Query",
+        "dynamodb:Scan",
+        "dynamodb:BatchGetItem",
+        "dynamodb:BatchWriteItem"
+      ],
+      "Resource": [
+        "arn:aws:dynamodb:${region}:${account_id}:table/mockdat-${environment}",
+        "arn:aws:dynamodb:${region}:${account_id}:table/mockdat-${environment}/index/*",
+        "arn:aws:dynamodb:${region}:${account_id}:table/self-driving-car-${environment}",
+        "arn:aws:dynamodb:${region}:${account_id}:table/self-driving-car-${environment}/index/*",
+        "arn:aws:dynamodb:${region}:${account_id}:table/cv-writer-${environment}",
+        "arn:aws:dynamodb:${region}:${account_id}:table/cv-writer-${environment}/index/*"
+      ]
+    }
+  ]
+}
