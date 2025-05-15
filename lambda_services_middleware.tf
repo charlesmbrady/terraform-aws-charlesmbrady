@@ -47,7 +47,7 @@ module "services_middleware_iam" {
   role_vars = {
     kms_key_id     = var.kms_key_id
     environment = var.environment_tag
-    region     = var.region
-    account_id = var.account_id
+    region      = data.aws_region.main.name
+    account_id = data.aws_caller_identity.current.account_id
   }
 }
