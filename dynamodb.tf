@@ -1,8 +1,8 @@
-
 locals {
   mockdat_name           = "mockdat"
   self_driving_car_name  = "self-driving-car"
   cv_writer_name         = "cv-writer"
+  looper_name            = "looper"
 }
 
 resource "aws_dynamodb_table" "mockdat" {
@@ -179,6 +179,67 @@ resource "aws_dynamodb_table" "cv_writer" {
 
   tags = {
     Name        = local.cv_writer_name
+    Environment = var.environment_tag
+  }
+}
+
+resource "aws_dynamodb_table" "looper" {
+  name         = "${local.looper_name}-${var.environment_tag}"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "pk"
+  range_key    = "sk"
+
+  server_side_encryption {
+    enabled = false
+  }
+
+  point_in_time_recovery {
+    enabled = false
+  }
+
+  # GSI for queries by user - users will only see their own configs
+  global_secondary_index {
+    name            = "user-index"
+    hash_key        = "user_id"
+    range_key       = "created_at"
+    projection_type = "ALL"
+  }
+
+  # GSI for queries by config name (optional, for searching by config)
+  global_secondary_index {
+    name            = "config-name-index"
+    hash_key        = "config_name"
+    range_key       = "created_at"
+    projection_type = "ALL"
+  }
+
+  attribute {
+    name = "pk"
+    type = "S"
+  }
+
+  attribute {
+    name = "sk"
+    type = "S"
+  }
+
+  attribute {
+    name = "user_id"
+    type = "S"
+  }
+
+  attribute {
+    name = "created_at"
+    type = "S"
+  }
+
+  attribute {
+    name = "config_name"
+    type = "S"
+  }
+
+  tags = {
+    Name        = local.looper_name
     Environment = var.environment_tag
   }
 }
