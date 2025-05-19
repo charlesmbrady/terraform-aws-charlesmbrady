@@ -49,5 +49,9 @@ module "services_middleware_iam" {
     environment = var.environment_tag
     region      = data.aws_region.main.name
     account_id = data.aws_caller_identity.main.account_id
+    mockdat_table_arn = aws_dynamodb_table.mockdat_table.arn
+    looper_table_arn = aws_dynamodb_table.looper_table.arn
+    cv_writer_table_arn = aws_dynamodb_table.cv_writer_table.arn
+    sdc_table_arn = aws_dynamodb_table.self_driving_car_table.arn
   }
 }
