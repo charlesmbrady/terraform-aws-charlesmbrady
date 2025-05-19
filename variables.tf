@@ -78,6 +78,86 @@ variable "cognito_user_pool_name" {
   description = "The name of the cognito user pool"
 }
 
+
+  variable "cognito_clients_allowed_oauth_flows" {
+    type        = list(string)
+    description = "The allowed oauth flows for the cognito clients"
+  }
+  variable "cognito_clients_allowed_oauth_flows_user_pool_client" {
+    type        = bool
+    description = "Whether to allow the oauth flows for the cognito clients"
+  }
+  variable "cognito_clients_allowed_oauth_scopes" {
+    type        = list(string)
+    description = "The allowed oauth scopes for the cognito clients"
+  }
+  variable "cognito_clients_supported_identity_providers" {
+    type        = list(string)
+    description = "The supported identity providers for the cognito clients"
+  }
+
+  variable "cognito_client_mockdat_callback_urls" {
+    type        = list(string)
+    description = "The callback urls for the mockdat cognito client"
+  }
+  variable "cognito_client_mockdat_default_redirect_uri" {
+    type        = string
+    description = "The default redirect uri for the mockdat cognito client"
+  }
+  variable "cognito_client_mockdat_logout_urls" {
+    type        = list(string)
+    description = "The logout urls for the mockdat cognito client"
+  }
+  variable "cognito_client_charlesmbrady_callback_urls" {
+    type        = list(string)
+    description = "The callback urls for the charlesmbrady cognito client"
+  }
+  variable "cognito_client_charlesmbrady_default_redirect_uri" {
+    type        = string
+    description = "The default redirect uri for the charlesmbrady cognito client"
+  }
+  variable "cognito_client_charlesmbrady_logout_urls" {
+    type        = list(string)
+    description = "The logout urls for the charlesmbrady cognito client"
+  }
+
+  variable "cognito_client_looper_callback_urls" {
+    type        = list(string)
+    description = "The callback urls for the looper cognito client"
+  }
+  variable "cognito_client_looper_default_redirect_uri" {
+    type        = string
+    description = "The default redirect uri for the looper cognito client"
+  }
+  variable "cognito_client_looper_logout_urls" {
+    type        = list(string)
+    description = "The logout urls for the looper cognito client"
+  }
+  variable "cognito_client_cv_writer_callback_urls" {
+    type        = list(string)
+    description = "The callback urls for the cv writer cognito client"
+  }
+  variable "cognito_client_cv_writer_default_redirect_uri" {
+    type        = string
+    description = "The default redirect uri for the cv writer cognito client"
+  }
+  variable "cognito_client_cv_writer_logout_urls" {
+    type        = list(string)
+    description = "The logout urls for the cv writer cognito client"
+  }
+  variable "cognito_client_self_driving_car_callback_urls" {
+    type        = list(string)
+    description = "The callback urls for the self driving car cognito client"
+  }
+  variable "cognito_client_self_driving_car_default_redirect_uri" {
+    type        = string
+    description = "The default redirect uri for the self driving car cognito client"
+  }
+  variable "cognito_client_self_driving_car_logout_urls" {
+    type        = list(string)
+    description = "The logout urls for the self driving car cognito client"
+  }
+
 # # /* -------------------------------------------------------------------------- */
 # # /*                                Services App                                */
 # # /* -------------------------------------------------------------------------- */

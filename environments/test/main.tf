@@ -7,10 +7,76 @@
 ####        ╚═╝   ╚══════╝╚══════╝   ╚═╝
 ###############################################################################
 
+locals{
+  local_web_domain = "http://localhost:3000"
+  local_web_domain_default_variants = [
+    "${local.local_web_domain}",
+    "${local.local_web_domain}/",
+    "${local.local_web_domain}/dashboard"
+  ]
+  local_web_domain_logout_urls = [
+    "${local.local_web_domain}",
+    "${local.local_web_domain}/",
+    "${local.local_web_domain}/logout"
+  ]
+  mockdat_domain = "mockdat-test.charlesmbrady.com"
+  mockdat_domain_default_variants = [
+    "${local.mockdat_domain}",
+    "${local.mockdat_domain}/",
+    "${local.mockdat_domain}/dashboard"
+  ]
+  mockdat_domain_logout_urls = [
+    "${local.mockdat_domain}",
+    "${local.mockdat_domain}/",
+    "${local.mockdat_domain}/logout"
+  ]
+  charlesmbrady_domain = "test.charlesmbrady.com"
+  charlesmbrady_domain_default_variants = [
+    "${local.charlesmbrady_domain}",
+    "${local.charlesmbrady_domain}/",
+    "${local.charlesmbrady_domain}/dashboard"
+  ]
+  charlesmbrady_domain_logout_urls = [
+    "${local.charlesmbrady_domain}",
+    "${local.charlesmbrady_domain}/",
+    "${local.charlesmbrady_domain}/logout"
+  ]
+  self_driving_car_domain = "sdc-test.charlesmbrady.com"
+  self_driving_car_domain_default_variants = [
+    "${local.self_driving_car_domain}",
+    "${local.self_driving_car_domain}/",
+    "${local.self_driving_car_domain}/dashboard"
+  ]
+  self_driving_car_domain_logout_urls = [
+    "${local.self_driving_car_domain}",
+    "${local.self_driving_car_domain}/",
+    "${local.self_driving_car_domain}/logout"
+  ]
+  looper_domain = "looper-test.charlesmbrady.com"
+  looper_domain_default_variants = [
+    "${local.looper_domain}",
+    "${local.looper_domain}/",
+    "${local.looper_domain}/dashboard"
+  ]
+  looper_domain_logout_urls = [
+    "${local.looper_domain}",
+    "${local.looper_domain}/",
+    "${local.looper_domain}/logout"
+  ]
+  cv_writer_domain = "cv-writer-test.charlesmbrady.com"
+  cv_writer_domain_default_variants = [
+    "${local.cv_writer_domain}",
+    "${local.cv_writer_domain}/",
+    "${local.cv_writer_domain}/dashboard"
+  ]
+  cv_writer_domain_logout_urls = [
+    "${local.cv_writer_domain}",
+    "${local.cv_writer_domain}/",
+    "${local.cv_writer_domain}/logout"
+  ]
+}
+
 module "main" {
-  # FIXME: Use the correct workspace name for your module.
-  # source  = "app.terraform.io/charlesmbrady/template/aws"
-  # version = "0.0.1"
   source = "../../"
 
   providers = {
@@ -49,5 +115,57 @@ module "main" {
   charlesmbrady_middleware_environment_variables = {
     EXAMPLE_ENV_VAR = "example"
   }
+
+  cognito_clients_allowed_oauth_flows = ["code"]
+  cognito_clients_allowed_oauth_flows_user_pool_client = true
+  cognito_clients_allowed_oauth_scopes = ["email", "openid", "profile", "aws.cognito.signin.user.admin"]
+  cognito_clients_supported_identity_providers = ["COGNITO"]
+
+  cognito_client_mockdat_callback_urls = concat(
+    local.local_web_domain_default_variants,
+    local.mockdat_domain_default_variants
+  )
+  cognito_client_mockdat_default_redirect_uri = local.local_web_domain
+  cognito_client_mockdat_logout_urls = concat(
+    local.local_web_domain_logout_urls,
+    local.mockdat_domain_logout_urls
+  )
+  cognito_client_charlesmbrady_callback_urls = concat(
+    local.local_web_domain_default_variants,
+    local.charlesmbrady_domain_default_variants
+  )
+  cognito_client_charlesmbrady_default_redirect_uri = local.local_web_domain
+  cognito_client_charlesmbrady_logout_urls = concat(
+    local.local_web_domain_logout_urls,
+    local.charlesmbrady_domain_logout_urls
+  )
+  cognito_client_self_driving_car_callback_urls = concat(
+    local.local_web_domain_default_variants,
+    local.self_driving_car_domain_default_variants
+  )
+  cognito_client_self_driving_car_default_redirect_uri = local.local_web_domain
+  cognito_client_self_driving_car_logout_urls = concat(
+    local.local_web_domain_logout_urls,
+    local.self_driving_car_domain_logout_urls
+  )
+  cognito_client_looper_callback_urls = concat(
+    local.local_web_domain_default_variants,
+    local.looper_domain_default_variants
+  )
+  cognito_client_looper_default_redirect_uri = local.local_web_domain
+  cognito_client_looper_logout_urls = concat(
+    local.local_web_domain_logout_urls,
+    local.looper_domain_logout_urls
+  )
+  cognito_client_cv_writer_callback_urls = concat(
+    local.local_web_domain_default_variants,
+    local.cv_writer_domain_default_variants
+  )
+  cognito_client_cv_writer_default_redirect_uri = local.local_web_domain
+  cognito_client_cv_writer_logout_urls = concat(
+    local.local_web_domain_logout_urls,
+    local.cv_writer_domain_logout_urls
+  )
+  
 
 }
