@@ -108,54 +108,18 @@ variable "cognito_user_pool_name" {
     type        = list(string)
     description = "The logout urls for the mockdat cognito client"
   }
-  variable "cognito_client_charlesmbrady_callback_urls" {
-    type        = list(string)
-    description = "The callback urls for the charlesmbrady cognito client"
-  }
-  variable "cognito_client_charlesmbrady_default_redirect_uri" {
-    type        = string
-    description = "The default redirect uri for the charlesmbrady cognito client"
-  }
-  variable "cognito_client_charlesmbrady_logout_urls" {
-    type        = list(string)
-    description = "The logout urls for the charlesmbrady cognito client"
-  }
 
-  variable "cognito_client_looper_callback_urls" {
+  variable "cognito_client_labs_callback_urls" {
     type        = list(string)
-    description = "The callback urls for the looper cognito client"
+    description = "The callback urls for the labs cognito client"
   }
-  variable "cognito_client_looper_default_redirect_uri" {
+  variable "cognito_client_labs_default_redirect_uri" {
     type        = string
-    description = "The default redirect uri for the looper cognito client"
+    description = "The default redirect uri for the labs cognito client"
   }
-  variable "cognito_client_looper_logout_urls" {
+  variable "cognito_client_labs_logout_urls" {
     type        = list(string)
-    description = "The logout urls for the looper cognito client"
-  }
-  variable "cognito_client_cv_writer_callback_urls" {
-    type        = list(string)
-    description = "The callback urls for the cv writer cognito client"
-  }
-  variable "cognito_client_cv_writer_default_redirect_uri" {
-    type        = string
-    description = "The default redirect uri for the cv writer cognito client"
-  }
-  variable "cognito_client_cv_writer_logout_urls" {
-    type        = list(string)
-    description = "The logout urls for the cv writer cognito client"
-  }
-  variable "cognito_client_self_driving_car_callback_urls" {
-    type        = list(string)
-    description = "The callback urls for the self driving car cognito client"
-  }
-  variable "cognito_client_self_driving_car_default_redirect_uri" {
-    type        = string
-    description = "The default redirect uri for the self driving car cognito client"
-  }
-  variable "cognito_client_self_driving_car_logout_urls" {
-    type        = list(string)
-    description = "The logout urls for the self driving car cognito client"
+    description = "The logout urls for the labs cognito client"
   }
 
 # # /* -------------------------------------------------------------------------- */

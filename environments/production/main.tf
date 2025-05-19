@@ -19,49 +19,16 @@ locals{
     "${local.mockdat_domain}/",
     "${local.mockdat_domain}/logout"
   ]
-  charlesmbrady_domain = "charlesmbrady.com"
-  charlesmbrady_domain_default_variants = [
-    "${local.charlesmbrady_domain}",
-    "${local.charlesmbrady_domain}/",
-    "${local.charlesmbrady_domain}/dashboard"
+  labs_domain = "labs.charlesmbrady.com"
+  labs_domain_default_variants = [
+    "${local.labs_domain}",
+    "${local.labs_domain}/",
+    "${local.labs_domain}/dashboard"
   ]
-  charlesmbrady_domain_logout_urls = [
-    "${local.charlesmbrady_domain}",
-    "${local.charlesmbrady_domain}/",
-    "${local.charlesmbrady_domain}/logout"
-  ]
-  self_driving_car_domain = "sdc.charlesmbrady.com"
-  self_driving_car_domain_default_variants = [
-    "${local.self_driving_car_domain}",
-    "${local.self_driving_car_domain}/",
-    "${local.self_driving_car_domain}/dashboard"
-  ]
-  self_driving_car_domain_logout_urls = [
-    "${local.self_driving_car_domain}",
-    "${local.self_driving_car_domain}/",
-    "${local.self_driving_car_domain}/logout"
-  ]
-  looper_domain = "looper.charlesmbrady.com"
-  looper_domain_default_variants = [
-    "${local.looper_domain}",
-    "${local.looper_domain}/",
-    "${local.looper_domain}/dashboard"
-  ]
-  looper_domain_logout_urls = [
-    "${local.looper_domain}",
-    "${local.looper_domain}/",
-    "${local.looper_domain}/logout"
-  ]
-  cv_writer_domain = "cv-writer.charlesmbrady.com"
-  cv_writer_domain_default_variants = [
-    "${local.cv_writer_domain}",
-    "${local.cv_writer_domain}/",
-    "${local.cv_writer_domain}/dashboard"
-  ]
-  cv_writer_domain_logout_urls = [
-    "${local.cv_writer_domain}",
-    "${local.cv_writer_domain}/",
-    "${local.cv_writer_domain}/logout"
+  labs_domain_logout_urls = [
+    "${local.labs_domain}",
+    "${local.labs_domain}/",
+    "${local.labs_domain}/logout"
   ]
 }
 ###############################################################################
@@ -119,36 +86,11 @@ module "main" {
   cognito_client_mockdat_logout_urls = concat(
     local.mockdat_domain_logout_urls
   )
-  cognito_client_charlesmbrady_callback_urls = concat(
-    local.charlesmbrady_domain_default_variants
+  cognito_client_labs_callback_urls = concat(
+    local.labs_domain_default_variants
   )
-  cognito_client_charlesmbrady_default_redirect_uri = local.charlesmbrady_domain
-  cognito_client_charlesmbrady_logout_urls = concat(
-    local.charlesmbrady_domain_logout_urls
+  cognito_client_labs_default_redirect_uri = local.labs_domain
+  cognito_client_labs_logout_urls = concat(
+    local.labs_domain_logout_urls
   )
-  cognito_client_self_driving_car_callback_urls = concat(
-    local.self_driving_car_domain_default_variants
-  )
-  cognito_client_self_driving_car_default_redirect_uri = local.self_driving_car_domain
-  cognito_client_self_driving_car_logout_urls = concat(
-    local.self_driving_car_domain_logout_urls
-  )
-  cognito_client_looper_callback_urls = concat(
-    local.looper_domain_default_variants
-  )
-  cognito_client_looper_default_redirect_uri = local.looper_domain
-  cognito_client_looper_logout_urls = concat(
-    local.looper_domain_logout_urls
-  )
-  cognito_client_cv_writer_callback_urls = concat(
-    local.cv_writer_domain_default_variants
-  )
-  cognito_client_cv_writer_default_redirect_uri = local.cv_writer_domain
-  cognito_client_cv_writer_logout_urls = concat(
-    local.cv_writer_domain_logout_urls
-  )
-  
-
-  
-
 }
