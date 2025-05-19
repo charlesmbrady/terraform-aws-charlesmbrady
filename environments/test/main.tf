@@ -10,14 +10,14 @@
 locals{
   local_web_domain = "http://localhost:3000"
   local_web_domain_default_variants = [
-    "${local_web_domain}",
-    "${local_web_domain}/",
-    "${local_web_domain}/dashboard"
+    "${local.local_web_domain}",
+    "${local.local_web_domain}/",
+    "${local.local_web_domain}/dashboard"
   ]
   local_web_domain_logout_urls = [
-    "${local_web_domain}",
-    "${local_web_domain}/",
-    "${local_web_domain}/logout"
+    "${local.local_web_domain}",
+    "${local.local_web_domain}/",
+    "${local.local_web_domain}/logout"
   ]
   mockdat_domain = "mockdat-test.charlesmbrady.com"
   mockdat_domain_default_variants = [
