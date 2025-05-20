@@ -15,6 +15,9 @@ resource "aws_cognito_user_pool_client" "mockdat" {
   default_redirect_uri                 = var.cognito_client_mockdat_default_redirect_uri
   logout_urls                          = var.cognito_client_mockdat_logout_urls
   supported_identity_providers         = local.supported_identity_providers
+  access_token_validity                = 1
+  id_token_validity                    = 1
+  refresh_token_validity               = 30
 }
 
 resource "aws_cognito_user_pool_client" "labs" {
@@ -27,4 +30,7 @@ resource "aws_cognito_user_pool_client" "labs" {
   default_redirect_uri                 = var.cognito_client_labs_default_redirect_uri
   logout_urls                          = var.cognito_client_labs_logout_urls
   supported_identity_providers         = local.supported_identity_providers
+  access_token_validity                = 1
+  id_token_validity                    = 1
+  refresh_token_validity               = 30
 }
