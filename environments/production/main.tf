@@ -8,7 +8,7 @@
 ###############################################################################
 
 locals{
-  mockdat_domain = "mockdat.charlesmbrady.com"
+  mockdat_domain = "https://mockdat.charlesmbrady.com"
   mockdat_domain_default_variants = [
     "${local.mockdat_domain}",
     "${local.mockdat_domain}/",
