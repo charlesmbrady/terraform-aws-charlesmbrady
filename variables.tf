@@ -216,3 +216,15 @@ variable "alias_name" {
   variable mockdat_alias_name {
     type = string
   }
+
+ variable labs_domain_aliases {
+    type = list(string)
+  }
+
+  variable labs_root_project_name_prefix {
+    type = string
+  }
+
+  variable labs_alias_name {
+    type = string
+  }
