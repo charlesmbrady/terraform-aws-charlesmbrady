@@ -19,7 +19,7 @@ locals{
     "${local.mockdat_domain}/",
     "${local.mockdat_domain}/logout"
   ]
-  labs_domain = "labs.charlesmbrady.com"
+  labs_domain = "https://labs.charlesmbrady.com"
   labs_domain_default_variants = [
     "${local.labs_domain}",
     "${local.labs_domain}/",
