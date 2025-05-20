@@ -65,6 +65,10 @@ module "main" {
   mockdat_domain_aliases = ["mockdat-test.charlesmbrady.com"]
   mockdat_root_project_name_prefix = "mockdat"
 
+  labs_alias_name = "labs-test.charlesmbrady.com"
+  labs_domain_aliases = ["labs-test.charlesmbrady.com"]
+  labs_root_project_name_prefix = "labs"
+
   # /* ------------------------------ Services API ------------------------------ */
   charlesmbrady_api_name = "charlesmbrady-CharlesmbradyAPI-Test"
   charlesmbrady_api_domain_name = "api-test.charlesmbrady.com"
