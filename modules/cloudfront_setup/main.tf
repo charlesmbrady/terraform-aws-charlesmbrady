@@ -2,7 +2,7 @@ locals {
   name_env_prefix = "${lower(var.root_project_name_prefix)}-${lower(var.environment)}"
 }
 
-resource "aws_route53_record" "alias" { #TODO: rename this to be more generic "alias"
+resource "aws_route53_record" "alias" { 
   zone_id = var.hosted_zone_id
   name    = var.alias_name
   type    = "A"
@@ -111,7 +111,8 @@ resource "aws_cloudfront_distribution" "cf" {
 
   restrictions {
     geo_restriction {
-      restriction_type = "none"
+      restriction_type = "whitelist"
+      locations        = ["US", "CA", "GB", "AU", "NZ", "IE"]
     }
   }
 
