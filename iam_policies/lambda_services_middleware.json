@@ -27,16 +27,7 @@
         "dynamodb:BatchGetItem",
         "dynamodb:BatchWriteItem"
       ],
-      "Resource": [
-        "${mockdat_table_arn}",
-        "${mockdat_table_arn}/index/*",
-        "${looper_table_arn}",
-        "${looper_table_arn}/index/*",
-        "${cv_writer_table_arn}",
-        "${cv_writer_table_arn}/index/*",
-        "${sdc_table_arn}",
-        "${sdc_table_arn}/index/*"
-      ]
+      "Resource": ["${mockdat_table_arn}", "${mockdat_table_arn}/index/*"]
     }
   ]
 }
