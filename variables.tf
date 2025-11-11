@@ -109,17 +109,17 @@ variable "cognito_user_pool_name" {
     description = "The logout urls for the mockdat cognito client"
   }
 
-  variable "cognito_client_labs_callback_urls" {
+  variable "cognito_client_apps_callback_urls" {
     type        = list(string)
-    description = "The callback urls for the labs cognito client"
+    description = "The callback urls for the apps cognito client"
   }
-  variable "cognito_client_labs_default_redirect_uri" {
+  variable "cognito_client_apps_default_redirect_uri" {
     type        = string
-    description = "The default redirect uri for the labs cognito client"
+    description = "The default redirect uri for the apps cognito client"
   }
-  variable "cognito_client_labs_logout_urls" {
+  variable "cognito_client_apps_logout_urls" {
     type        = list(string)
-    description = "The logout urls for the labs cognito client"
+    description = "The logout urls for the apps cognito client"
   }
 
 # # /* -------------------------------------------------------------------------- */
@@ -217,14 +217,14 @@ variable "alias_name" {
     type = string
   }
 
- variable labs_domain_aliases {
+ variable apps_domain_aliases {
     type = list(string)
   }
 
-  variable labs_root_project_name_prefix {
+  variable apps_root_project_name_prefix {
     type = string
   }
 
-  variable labs_alias_name {
+  variable apps_alias_name {
     type = string
   }

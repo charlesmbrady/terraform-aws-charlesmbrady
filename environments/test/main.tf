@@ -30,16 +30,16 @@ locals{
     "${local.mockdat_domain}/",
     "${local.mockdat_domain}/logout"
   ]
-  labs_domain = "https://labs-test.charlesmbrady.com"
-  labs_domain_default_variants = [
-    "${local.labs_domain}",
-    "${local.labs_domain}/",
-    "${local.labs_domain}/dashboard"
+  apps_domain = "https://apps-test.charlesmbrady.com"
+  apps_domain_default_variants = [
+    "${local.apps_domain}",
+    "${local.apps_domain}/",
+    "${local.apps_domain}/dashboard"
   ]
-  labs_domain_logout_urls = [
-    "${local.labs_domain}",
-    "${local.labs_domain}/",
-    "${local.labs_domain}/logout"
+  apps_domain_logout_urls = [
+    "${local.apps_domain}",
+    "${local.apps_domain}/",
+    "${local.apps_domain}/logout"
   ]
 }
 
@@ -65,9 +65,9 @@ module "main" {
   mockdat_domain_aliases = ["mockdat-test.charlesmbrady.com"]
   mockdat_root_project_name_prefix = "mockdat"
 
-  labs_alias_name = "labs-test.charlesmbrady.com"
-  labs_domain_aliases = ["labs-test.charlesmbrady.com"]
-  labs_root_project_name_prefix = "labs"
+  apps_alias_name = "apps-test.charlesmbrady.com"
+  apps_domain_aliases = ["apps-test.charlesmbrady.com"]
+  apps_root_project_name_prefix = "apps"
 
   # /* ------------------------------ Services API ------------------------------ */
   charlesmbrady_api_name = "charlesmbrady-CharlesmbradyAPI-Test"
@@ -101,14 +101,14 @@ module "main" {
     local.local_web_domain_logout_urls,
     local.mockdat_domain_logout_urls
   )
-  cognito_client_labs_callback_urls = concat(
+  cognito_client_apps_callback_urls = concat(
     local.local_web_domain_default_variants,
-    local.labs_domain_default_variants
+    local.apps_domain_default_variants
   )
-  cognito_client_labs_default_redirect_uri = local.local_web_domain
-  cognito_client_labs_logout_urls = concat(
+  cognito_client_apps_default_redirect_uri = local.local_web_domain
+  cognito_client_apps_logout_urls = concat(
     local.local_web_domain_logout_urls,
-    local.labs_domain_logout_urls
+    local.apps_domain_logout_urls
   )
     
 
