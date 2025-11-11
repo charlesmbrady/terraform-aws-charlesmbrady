@@ -3,6 +3,9 @@ locals {
   allowed_oauth_flows_user_pool_client = true
   allowed_oauth_scopes = ["email", "openid", "profile", "aws.cognito.signin.user.admin"]
   supported_identity_providers = ["COGNITO"]
+  access_token_validity = 1
+  id_token_validity = 1
+  refresh_token_validity = 30
 }
 
 resource "aws_cognito_user_pool_client" "mockdat" {
@@ -15,13 +18,13 @@ resource "aws_cognito_user_pool_client" "mockdat" {
   default_redirect_uri                 = var.cognito_client_mockdat_default_redirect_uri
   logout_urls                          = var.cognito_client_mockdat_logout_urls
   supported_identity_providers         = local.supported_identity_providers
-  access_token_validity                = 1
-  id_token_validity                    = 1
-  refresh_token_validity               = 30
+  access_token_validity                = local.access_token_validity
+  id_token_validity                    = local.id_token_validity
+  refresh_token_validity               = local.refresh_token_validity
 }
 
-resource "aws_cognito_user_pool_client" "labs" {
-  name                                 = "labs"
+resource "aws_cognito_user_pool_client" "apps" {
+  name                                 = "apps"
   user_pool_id                         = aws_cognito_user_pool.charlesmbrady.id
   allowed_oauth_flows                  = local.allowed_oauth_flows
   allowed_oauth_flows_user_pool_client = local.allowed_oauth_flows_user_pool_client
@@ -30,7 +33,7 @@ resource "aws_cognito_user_pool_client" "labs" {
   default_redirect_uri                 = var.cognito_client_labs_default_redirect_uri
   logout_urls                          = var.cognito_client_labs_logout_urls
   supported_identity_providers         = local.supported_identity_providers
-  access_token_validity                = 1
-  id_token_validity                    = 1
-  refresh_token_validity               = 30
+  access_token_validity                = local.access_token_validity
+  id_token_validity                    = local.id_token_validity
+  refresh_token_validity               = local.refresh_token_validity
 }
