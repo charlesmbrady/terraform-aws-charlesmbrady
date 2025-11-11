@@ -1,8 +1,10 @@
 locals {
   mockdat_name           = "mockdat"
-  self_driving_car_name  = "self-driving-car"
-  cv_writer_name         = "cv-writer"
-  looper_name            = "looper"
+  # self_driving_car_name  = "self-driving-car"
+  # google_books_search_name = "google-books-search"
+  # scrape_n_surf_name     = "scrape-n-surf"
+  # dupe_gen_name          = "dupe-gen"
+  # better_banking_name    = "better-banking"
 }
 
 resource "aws_dynamodb_table" "mockdat" {
@@ -67,179 +69,164 @@ resource "aws_dynamodb_table" "mockdat" {
   }
 }
 
-resource "aws_dynamodb_table" "self_driving_car" {
-  name         = "${local.self_driving_car_name}-${var.environment_tag}"
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "pk"
-  range_key    = "sk"
+# resource "aws_dynamodb_table" "self_driving_car" {
+#   name         = "${local.self_driving_car_name}-${var.environment_tag}"
+#   billing_mode = "PAY_PER_REQUEST"
+#   hash_key     = "pk"
+#   range_key    = "sk"
 
-  server_side_encryption {
-    enabled = false
-  }
+#   server_side_encryption {
+#     enabled = false
+#   }
 
-  point_in_time_recovery {
-    enabled = false
-  }
+#   point_in_time_recovery {
+#     enabled = false
+#   }
 
-  # GSI for queries by brain type
-  global_secondary_index {
-    name            = "brain-type-index"
-    hash_key        = "brain_type"
-    range_key       = "version"
-    projection_type = "ALL"
-  }
+#   # GSI for queries by brain type
+#   global_secondary_index {
+#     name            = "brain-type-index"
+#     hash_key        = "brain_type"
+#     range_key       = "version"
+#     projection_type = "ALL"
+#   }
 
-  # GSI for queries by creator
-  global_secondary_index {
-    name            = "creator-index"
-    hash_key        = "creator_id"
-    range_key       = "created_at"
-    projection_type = "ALL"
-  }
+#   # GSI for queries by creator
+#   global_secondary_index {
+#     name            = "creator-index"
+#     hash_key        = "creator_id"
+#     range_key       = "created_at"
+#     projection_type = "ALL"
+#   }
 
-  attribute {
-    name = "pk"
-    type = "S"
-  }
+#   attribute {
+#     name = "pk"
+#     type = "S"
+#   }
 
-  attribute {
-    name = "sk"
-    type = "S"
-  }
+#   attribute {
+#     name = "sk"
+#     type = "S"
+#   }
 
-  attribute {
-    name = "brain_type"
-    type = "S"
-  }
+#   attribute {
+#     name = "brain_type"
+#     type = "S"
+#   }
 
-  attribute {
-    name = "version"
-    type = "S"
-  }
+#   attribute {
+#     name = "version"
+#     type = "S"
+#   }
 
-  attribute {
-    name = "creator_id"
-    type = "S"
-  }
+#   attribute {
+#     name = "creator_id"
+#     type = "S"
+#   }
 
-  attribute {
-    name = "created_at"
-    type = "S"
-  }
+#   attribute {
+#     name = "created_at"
+#     type = "S"
+#   }
 
-  tags = {
-    Name        = local.self_driving_car_name
-    Environment = var.environment_tag
-  }
-}
+#   tags = {
+#     Name        = local.self_driving_car_name
+#     Environment = var.environment_tag
+#   }
+# }
 
-resource "aws_dynamodb_table" "cv_writer" {
-  name         = "${local.cv_writer_name}-${var.environment_tag}"
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "pk"
-  range_key    = "sk"
+# resource "aws_dynamodb_table" "google_books_search" {
+#   name         = "${local.google_books_search_name}-${var.environment_tag}"
+#   billing_mode = "PAY_PER_REQUEST"
+#   hash_key     = "pk"
 
-  server_side_encryption {
-    enabled = false
-  }
+#   server_side_encryption {
+#     enabled = false
+#   }
 
-  point_in_time_recovery {
-    enabled = false
-  }
+#   point_in_time_recovery {
+#     enabled = false
+#   }
 
-  # GSI for queries by user - users will only see their own items
-  global_secondary_index {
-    name            = "user-index"
-    hash_key        = "user_id"
-    range_key       = "created_at"
-    projection_type = "ALL"
-  }
+#   attribute {
+#     name = "pk"
+#     type = "S"
+#   }
 
-  # No need for document-type-index since users will only see their own items
+#   tags = {
+#     Name        = local.google_books_search_name
+#     Environment = var.environment_tag
+#   }
+# }
 
-  attribute {
-    name = "pk"
-    type = "S"
-  }
+# resource "aws_dynamodb_table" "scrape_n_surf" {
+#   name         = "${local.scrape_n_surf_name}-${var.environment_tag}"
+#   billing_mode = "PAY_PER_REQUEST"
+#   hash_key     = "pk"
 
-  attribute {
-    name = "sk"
-    type = "S"
-  }
+#   server_side_encryption {
+#     enabled = false
+#   }
 
-  attribute {
-    name = "user_id"
-    type = "S"
-  }
+#   point_in_time_recovery {
+#     enabled = false
+#   }
 
-  attribute {
-    name = "created_at"
-    type = "S"
-  }
+#   attribute {
+#     name = "pk"
+#     type = "S"
+#   }
 
-  tags = {
-    Name        = local.cv_writer_name
-    Environment = var.environment_tag
-  }
-}
+#   tags = {
+#     Name        = local.scrape_n_surf_name
+#     Environment = var.environment_tag
+#   }
+# }
 
-resource "aws_dynamodb_table" "looper" {
-  name         = "${local.looper_name}-${var.environment_tag}"
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "pk"
-  range_key    = "sk"
+# resource "aws_dynamodb_table" "dupe_gen" {
+#   name         = "${local.dupe_gen_name}-${var.environment_tag}"
+#   billing_mode = "PAY_PER_REQUEST"
+#   hash_key     = "pk"
 
-  server_side_encryption {
-    enabled = false
-  }
+#   server_side_encryption {
+#     enabled = false
+#   }
 
-  point_in_time_recovery {
-    enabled = false
-  }
+#   point_in_time_recovery {
+#     enabled = false
+#   }
 
-  # GSI for queries by user - users will only see their own configs
-  global_secondary_index {
-    name            = "user-index"
-    hash_key        = "user_id"
-    range_key       = "created_at"
-    projection_type = "ALL"
-  }
+#   attribute {
+#     name = "pk"
+#     type = "S"
+#   }
 
-  # GSI for queries by config name (optional, for searching by config)
-  global_secondary_index {
-    name            = "config-name-index"
-    hash_key        = "config_name"
-    range_key       = "created_at"
-    projection_type = "ALL"
-  }
+#   tags = {
+#     Name        = local.dupe_gen_name
+#     Environment = var.environment_tag
+#   }
+# }
 
-  attribute {
-    name = "pk"
-    type = "S"
-  }
+# resource "aws_dynamodb_table" "better_banking" {
+#   name         = "${local.better_banking_name}-${var.environment_tag}"
+#   billing_mode = "PAY_PER_REQUEST"
+#   hash_key     = "pk"
 
-  attribute {
-    name = "sk"
-    type = "S"
-  }
+#   server_side_encryption {
+#     enabled = false
+#   }
 
-  attribute {
-    name = "user_id"
-    type = "S"
-  }
+#   point_in_time_recovery {
+#     enabled = false
+#   }
 
-  attribute {
-    name = "created_at"
-    type = "S"
-  }
+#   attribute {
+#     name = "pk"
+#     type = "S"
+#   }
 
-  attribute {
-    name = "config_name"
-    type = "S"
-  }
-
-  tags = {
-    Name        = local.looper_name
-    Environment = var.environment_tag
-  }
-}
+#   tags = {
+#     Name        = local.better_banking_name
+#     Environment = var.environment_tag
+#   }
+# }
