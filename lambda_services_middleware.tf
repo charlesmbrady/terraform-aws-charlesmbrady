@@ -1,7 +1,7 @@
 locals {
-  services_middleware_app_base_name = "services-middleware"
-  services_middleware_name     = "charlesmbrady_${var.environment_tag}_services_middleware"
-  services_middleware_app_name = "charlesmbrady-${var.environment_tag}-services-middleware"
+  services_middleware_app_base_name = "api-services"
+  services_middleware_name     = "charlesmbrady_api_services_${var.environment_tag}"
+  services_middleware_app_name = "charlesmbrady-api-services-${var.environment_tag}"
 }
 
 module "charlesmbrady_middleware_lambda" {
@@ -50,8 +50,5 @@ module "services_middleware_iam" {
     region      = data.aws_region.main.name
     account_id = data.aws_caller_identity.main.account_id
     mockdat_table_arn = aws_dynamodb_table.mockdat.arn
-    looper_table_arn = aws_dynamodb_table.looper.arn
-    cv_writer_table_arn = aws_dynamodb_table.cv_writer.arn
-    sdc_table_arn = aws_dynamodb_table.self_driving_car.arn
   }
 }
