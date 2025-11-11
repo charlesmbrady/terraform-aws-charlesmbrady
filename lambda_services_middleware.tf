@@ -1,7 +1,7 @@
 locals {
-  services_middleware_app_base_name = "services-middleware"
-  services_middleware_name     = "charlesmbrady_${var.environment_tag}_services_middleware"
-  services_middleware_app_name = "charlesmbrady-${var.environment_tag}-services-middleware"
+  services_middleware_app_base_name = "api-services"
+  services_middleware_name     = "charlesmbrady_api_services_${var.environment_tag}"
+  services_middleware_app_name = "charlesmbrady-api-services-${var.environment_tag}"
 }
 
 module "charlesmbrady_middleware_lambda" {
