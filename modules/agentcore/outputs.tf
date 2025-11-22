@@ -18,7 +18,7 @@ output "runtime_id" {
 
 output "runtime_name" {
   description = "Name of the AgentCore runtime"
-  value       = aws_bedrockagentcore_agent_runtime.main.runtime_name
+  value       = aws_bedrockagentcore_agent_runtime.main.agent_runtime_name
 }
 
 ###############################################################################
@@ -27,12 +27,12 @@ output "runtime_name" {
 
 output "endpoint_id" {
   description = "ID of the AgentCore runtime endpoint"
-  value       = aws_bedrockagentcore_runtime_endpoint.default.id
+  value       = aws_bedrockagentcore_agent_runtime_endpoint.default.id
 }
 
 output "endpoint_url" {
   description = "URL of the AgentCore runtime endpoint"
-  value       = aws_bedrockagentcore_runtime_endpoint.default.endpoint_url
+  value       = try(aws_bedrockagentcore_agent_runtime_endpoint.default.endpoint_url, "")
 }
 
 ###############################################################################

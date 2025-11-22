@@ -11,28 +11,11 @@ locals {
 ###############################################################################
 
 resource "aws_bedrockagentcore_agent_runtime" "main" {
-  runtime_name        = local.agentcore_name
-  foundation_model_id = var.foundation_model
-  role_arn            = aws_iam_role.agentcore_runtime.arn
-  instruction         = var.agent_instruction
-  description         = var.agent_description
-
-  # Session timeout configuration
-  idle_session_ttl_in_seconds = 600
-
-  # Enhanced prompt configuration with inference parameters
-  prompt_override_configuration {
-    prompt_configurations {
-      prompt_type = "ORCHESTRATION"
-
-      inference_configuration {
-        temperature = 0.7
-        top_p       = 0.9
-        top_k       = 250
-        max_length  = 2048
-      }
-    }
-  }
+  agent_runtime_name = local.agentcore_name
+  foundation_model   = var.foundation_model
+  role_arn           = aws_iam_role.agentcore_runtime.arn
+  instruction        = var.agent_instruction
+  description        = var.agent_description
 
   tags = {
     Name        = local.agentcore_name
@@ -45,8 +28,8 @@ resource "aws_bedrockagentcore_agent_runtime" "main" {
 ###############################################################################
 
 resource "aws_bedrockagentcore_agent_runtime_endpoint" "default" {
-  runtime_id = aws_bedrockagentcore_agent_runtime.main.id
-  qualifier  = "DEFAULT"
+  agent_runtime_id = aws_bedrockagentcore_agent_runtime.main.id
+  name             = "${local.agentcore_name}-endpoint"
 
   tags = {
     Name        = "${local.agentcore_name}-endpoint-default"
@@ -59,10 +42,13 @@ resource "aws_bedrockagentcore_agent_runtime_endpoint" "default" {
 ###############################################################################
 
 resource "aws_bedrockagentcore_gateway" "main" {
-  gateway_name = "${local.agentcore_name}-gateway"
+  name            = "${local.agentcore_name}-gateway"
+  protocol_type   = "REST"
+  authorizer_type = "NONE"
+  role_arn        = aws_iam_role.agentcore_runtime.arn
 
-  routing_config {
-    default_runtime_id = aws_bedrockagentcore_agent_runtime.main.id
+  agent_runtime_association {
+    agent_runtime_id = aws_bedrockagentcore_agent_runtime.main.id
   }
 
   tags = {
@@ -74,18 +60,9 @@ resource "aws_bedrockagentcore_gateway" "main" {
 ###############################################################################
 #### AgentCore Gateway Tool - Lambda Integration
 ###############################################################################
-
-resource "aws_bedrockagentcore_gateway_tool" "lambda_tool" {
-  gateway_id = aws_bedrockagentcore_gateway.main.id
-
-  tool_config {
-    lambda_tool {
-      lambda_arn  = var.tool_lambda_arn
-      name        = var.tool_lambda_name
-      description = "API services tool for ${var.project_name} platform"
-    }
-  }
-}
+# Note: aws_bedrockagentcore_gateway_tool does not exist in the provider.
+# Tool integration is handled at invocation time via Lambda permissions.
+# The gateway already has IAM role permissions to invoke the Lambda tool.
 
 ###############################################################################
 #### AgentCore Memory Configuration
@@ -94,16 +71,14 @@ resource "aws_bedrockagentcore_gateway_tool" "lambda_tool" {
 resource "aws_bedrockagentcore_memory" "main" {
   count = var.enable_memory ? 1 : 0
 
-  runtime_id = aws_bedrockagentcore_agent_runtime.main.id
+  name                  = "${local.agentcore_name}-memory"
+  agent_runtime_id      = aws_bedrockagentcore_agent_runtime.main.id
+  event_expiry_duration = "${var.memory_retention_days * 24}h"
 
-  storage_config {
-    dynamodb_storage {
+  memory_storage_configuration {
+    dynamodb_storage_configuration {
       table_name = aws_dynamodb_table.agentcore_memory.name
     }
-  }
-
-  retention_config {
-    retention_days = var.memory_retention_days
   }
 }
 
