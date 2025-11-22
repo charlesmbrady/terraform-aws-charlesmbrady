@@ -2,7 +2,7 @@ locals {
   name_env_prefix = "${lower(var.root_project_name_prefix)}-${lower(var.environment)}"
 }
 
-resource "aws_route53_record" "alias" { 
+resource "aws_route53_record" "alias" {
   zone_id = var.hosted_zone_id
   name    = var.alias_name
   type    = "A"
@@ -24,7 +24,7 @@ resource "aws_s3_bucket" "website_bucket" {
 
   website {
     index_document = "index.html"
-    error_document = "index.html"  # SPA fallback
+    error_document = "index.html" # SPA fallback
   }
 }
 
@@ -117,7 +117,7 @@ resource "aws_cloudfront_distribution" "cf" {
   }
 
   tags = {
-    Environment = var.environment
+    Environment  = var.environment
     Root_Project = var.root_project_name_prefix
   }
 }

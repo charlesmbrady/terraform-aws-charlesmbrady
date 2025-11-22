@@ -79,48 +79,48 @@ variable "cognito_user_pool_name" {
 }
 
 
-  variable "cognito_clients_allowed_oauth_flows" {
-    type        = list(string)
-    description = "The allowed oauth flows for the cognito clients"
-  }
-  variable "cognito_clients_allowed_oauth_flows_user_pool_client" {
-    type        = bool
-    description = "Whether to allow the oauth flows for the cognito clients"
-  }
-  variable "cognito_clients_allowed_oauth_scopes" {
-    type        = list(string)
-    description = "The allowed oauth scopes for the cognito clients"
-  }
-  variable "cognito_clients_supported_identity_providers" {
-    type        = list(string)
-    description = "The supported identity providers for the cognito clients"
-  }
+variable "cognito_clients_allowed_oauth_flows" {
+  type        = list(string)
+  description = "The allowed oauth flows for the cognito clients"
+}
+variable "cognito_clients_allowed_oauth_flows_user_pool_client" {
+  type        = bool
+  description = "Whether to allow the oauth flows for the cognito clients"
+}
+variable "cognito_clients_allowed_oauth_scopes" {
+  type        = list(string)
+  description = "The allowed oauth scopes for the cognito clients"
+}
+variable "cognito_clients_supported_identity_providers" {
+  type        = list(string)
+  description = "The supported identity providers for the cognito clients"
+}
 
-  variable "cognito_client_mockdat_callback_urls" {
-    type        = list(string)
-    description = "The callback urls for the mockdat cognito client"
-  }
-  variable "cognito_client_mockdat_default_redirect_uri" {
-    type        = string
-    description = "The default redirect uri for the mockdat cognito client"
-  }
-  variable "cognito_client_mockdat_logout_urls" {
-    type        = list(string)
-    description = "The logout urls for the mockdat cognito client"
-  }
+variable "cognito_client_mockdat_callback_urls" {
+  type        = list(string)
+  description = "The callback urls for the mockdat cognito client"
+}
+variable "cognito_client_mockdat_default_redirect_uri" {
+  type        = string
+  description = "The default redirect uri for the mockdat cognito client"
+}
+variable "cognito_client_mockdat_logout_urls" {
+  type        = list(string)
+  description = "The logout urls for the mockdat cognito client"
+}
 
-  variable "cognito_client_apps_callback_urls" {
-    type        = list(string)
-    description = "The callback urls for the apps cognito client"
-  }
-  variable "cognito_client_apps_default_redirect_uri" {
-    type        = string
-    description = "The default redirect uri for the apps cognito client"
-  }
-  variable "cognito_client_apps_logout_urls" {
-    type        = list(string)
-    description = "The logout urls for the apps cognito client"
-  }
+variable "cognito_client_apps_callback_urls" {
+  type        = list(string)
+  description = "The callback urls for the apps cognito client"
+}
+variable "cognito_client_apps_default_redirect_uri" {
+  type        = string
+  description = "The default redirect uri for the apps cognito client"
+}
+variable "cognito_client_apps_logout_urls" {
+  type        = list(string)
+  description = "The logout urls for the apps cognito client"
+}
 
 # # /* -------------------------------------------------------------------------- */
 # # /*                                Services App                                */
@@ -162,7 +162,7 @@ variable "charlesmbrady_api_throttling_burst_limit" {
 variable "charlesmbrady_api_metrics_enabled" {
   type        = bool
   description = "Enable detailed metrics for the API Gateway"
-  default    = false
+  default     = false
 }
 
 variable "charlesmbrady_api_logging_level" {
@@ -205,26 +205,84 @@ variable "alias_name" {
   type        = string
   description = "The alias name for the custom domain"
 }
-  variable mockdat_domain_aliases {
-    type = list(string)
-  }
+variable "mockdat_domain_aliases" {
+  type = list(string)
+}
 
-  variable mockdat_root_project_name_prefix {
-    type = string
-  }
+variable "mockdat_root_project_name_prefix" {
+  type = string
+}
 
-  variable mockdat_alias_name {
-    type = string
-  }
+variable "mockdat_alias_name" {
+  type = string
+}
 
- variable apps_domain_aliases {
-    type = list(string)
-  }
+variable "apps_domain_aliases" {
+  type = list(string)
+}
 
-  variable apps_root_project_name_prefix {
-    type = string
-  }
+variable "apps_root_project_name_prefix" {
+  type = string
+}
 
-  variable apps_alias_name {
-    type = string
-  }
+variable "apps_alias_name" {
+  type = string
+}
+
+###############################################################################
+#### AgentCore Configuration
+###############################################################################
+
+variable "agentcore_agent_name" {
+  type        = string
+  description = "Name for the AgentCore agent"
+  default     = "assistant"
+}
+
+variable "agentcore_agent_instruction" {
+  type        = string
+  description = "Instructions for the AgentCore agent behavior"
+  default     = "You are a helpful assistant for the charlesmbrady.com platform. You can help users with their queries and provide information about available services."
+}
+
+variable "agentcore_foundation_model" {
+  type        = string
+  description = "The foundation model ID to use for the agent"
+  default     = "anthropic.claude-3-5-sonnet-20240620-v1:0"
+}
+
+variable "agentcore_enable_memory" {
+  type        = bool
+  description = "Whether to enable conversation memory for the agent"
+  default     = true
+}
+
+variable "agentcore_memory_retention_days" {
+  type        = number
+  description = "Number of days to retain conversation history"
+  default     = 30
+}
+
+variable "agentcore_agent_description" {
+  type        = string
+  description = "Description of the agent's purpose"
+  default     = "AI assistant for the charlesmbrady.com platform"
+}
+
+###############################################################################
+#### DIY RAG Configuration (Root)
+###############################################################################
+
+variable "agentcore_rag_enabled" {
+  type        = bool
+  description = "Whether to enable lightweight DIY RAG embeddings S3 bucket"
+  default     = true
+}
+
+variable "agentcore_rag_bucket_name" {
+  type        = string
+  description = "Optional override for RAG embeddings S3 bucket name. Leave blank to auto-generate."
+  default     = ""
+}
+
+

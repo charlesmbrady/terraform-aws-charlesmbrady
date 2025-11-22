@@ -28,6 +28,25 @@
         "dynamodb:BatchWriteItem"
       ],
       "Resource": ["${mockdat_table_arn}", "${mockdat_table_arn}/index/*"]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "bedrock:InvokeAgent",
+        "bedrock:InvokeModel",
+        "bedrock:InvokeModelWithResponseStream"
+      ],
+      "Resource": [
+        "arn:aws:bedrock:${region}:${account_id}:agent/*",
+        "arn:aws:bedrock:${region}::foundation-model/*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["ssm:GetParameter", "ssm:GetParameters"],
+      "Resource": [
+        "arn:aws:ssm:${region}:${account_id}:parameter/${project_name}/${environment}/agentcore/*"
+      ]
     }
   ]
 }

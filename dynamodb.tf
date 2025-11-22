@@ -1,5 +1,5 @@
 locals {
-  mockdat_name           = "mockdat"
+  mockdat_name = "mockdat"
   # self_driving_car_name  = "self-driving-car"
   # google_books_search_name = "google-books-search"
   # scrape_n_surf_name     = "scrape-n-surf"

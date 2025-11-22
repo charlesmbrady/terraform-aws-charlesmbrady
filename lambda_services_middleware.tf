@@ -1,7 +1,7 @@
 locals {
   services_middleware_app_base_name = "api-services"
-  services_middleware_name     = "charlesmbrady_api_services_${var.environment_tag}"
-  services_middleware_app_name = "charlesmbrady-api-services-${var.environment_tag}"
+  services_middleware_name          = "charlesmbrady_api_services_${var.environment_tag}"
+  services_middleware_app_name      = "charlesmbrady-api-services-${var.environment_tag}"
 }
 
 module "charlesmbrady_middleware_lambda" {
@@ -45,10 +45,11 @@ module "services_middleware_iam" {
   template           = "../../iam_policies/lambda_services_middleware.json"
 
   role_vars = {
-    kms_key_id     = var.kms_key_id
-    environment = var.environment_tag
-    region      = data.aws_region.main.name
-    account_id = data.aws_caller_identity.main.account_id
+    kms_key_id        = var.kms_key_id
+    environment       = var.environment_tag
+    region            = data.aws_region.main.name
+    account_id        = data.aws_caller_identity.main.account_id
     mockdat_table_arn = aws_dynamodb_table.mockdat.arn
+    project_name      = var.root_project_name_prefix
   }
 }
