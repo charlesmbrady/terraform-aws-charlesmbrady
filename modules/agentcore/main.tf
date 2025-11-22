@@ -44,7 +44,7 @@ resource "aws_bedrockagentcore_agent_runtime" "main" {
 #### AgentCore Runtime Endpoint
 ###############################################################################
 
-resource "aws_bedrockagentcore_runtime_endpoint" "default" {
+resource "aws_bedrockagentcore_agent_runtime_endpoint" "default" {
   runtime_id = aws_bedrockagentcore_agent_runtime.main.id
   qualifier  = "DEFAULT"
 
@@ -184,7 +184,7 @@ resource "aws_ssm_parameter" "agentcore_endpoint_url" {
   name        = "/${var.project_name}/${var.environment_tag}/agentcore/endpoint-url"
   description = "URL of the AgentCore runtime endpoint"
   type        = "String"
-  value       = aws_bedrockagentcore_runtime_endpoint.default.endpoint_url
+  value       = aws_bedrockagentcore_agent_runtime_endpoint.default.endpoint_url
 
   tags = {
     Name        = "agentcore-endpoint-url"
