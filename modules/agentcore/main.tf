@@ -24,9 +24,8 @@ resource "aws_bedrockagentcore_agent_runtime" "main" {
   # Required artifact configuration - points to managed S3 code package
   agent_runtime_artifact {
     code_configuration {
-      # Using ultra-minimal version that only uses bedrock_agentcore (confirmed working)
-      # Switched to basic direct Bedrock invocation runtime (no strands deps)
-      entry_point = ["main_basic_agent.py"]
+      # Production runtime with full strands tooling
+      entry_point = ["main.py"]
       # Use currently supported Bedrock AgentCore Python runtime version
       runtime     = "PYTHON_3_12"
       code {
@@ -172,7 +171,7 @@ data "archive_file" "runtime_code" {
   type        = "zip"
   source_dir  = "${path.module}/runtime_code"
   output_path = "${path.module}/.terraform/runtime_code.zip"
-  excludes    = ["package.sh", "build_package.sh", "README.md", ".DS_Store", "build/", "main_minimal.py"]
+  excludes    = ["package.sh", "build_package.sh", "deploy_full.sh", "deploy_full_fixed.sh", "force_recreate.sh", "README.md", ".DS_Store", "build/", "*.zip", "main_minimal.py", "main_simple.py", "main_basic_agent.py", "requirements_minimal.txt"]
 }
 
 # Upload runtime code to S3
