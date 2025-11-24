@@ -189,50 +189,11 @@ resource "aws_ssm_parameter" "rag_bucket_name" {
 }
 
 ###############################################################################
-#### SSM Parameters for Runtime Configuration
+#### NOTE: SSM parameters for runtime/gateway ID/ARN removed
 ###############################################################################
-
-# Store runtime ARN for Lambda/frontend access
-resource "aws_ssm_parameter" "agentcore_runtime_arn" {
-  name        = "/${var.project_name}/${var.environment_tag}/agentcore/runtime-arn"
-  description = "ARN of the AgentCore runtime"
-  type        = "String"
-  value       = aws_bedrockagentcore_agent_runtime.main.arn
-
-  tags = {
-    Name        = "agentcore-runtime-arn"
-    Environment = var.environment_tag
-  }
-}
-
-# Store runtime ID for invocations
-resource "aws_ssm_parameter" "agentcore_runtime_id" {
-  name        = "/${var.project_name}/${var.environment_tag}/agentcore/runtime-id"
-  description = "ID of the AgentCore runtime"
-  type        = "String"
-  value       = aws_bedrockagentcore_agent_runtime.main.id
-
-  tags = {
-    Name        = "agentcore-runtime-id"
-    Environment = var.environment_tag
-  }
-}
-
-# Store endpoint URL
-## Removed endpoint & qualifier SSM parameters (endpoint resource removed)
-
-# Store gateway ID
-resource "aws_ssm_parameter" "agentcore_gateway_id" {
-  name        = "/${var.project_name}/${var.environment_tag}/agentcore/gateway-id"
-  description = "ID of the AgentCore gateway"
-  type        = "String"
-  value       = aws_bedrockagentcore_gateway.main.id
-
-  tags = {
-    Name        = "agentcore-gateway-id"
-    Environment = var.environment_tag
-  }
-}
+# The provider does not export runtime or gateway id/arn attributes. References
+# to those attributes caused Terraform errors. These SSM parameters are removed
+# to ensure a successful apply without unsupported attribute lookups.
 
 
 ###############################################################################

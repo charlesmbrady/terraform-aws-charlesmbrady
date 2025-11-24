@@ -6,15 +6,7 @@
 #### AgentCore Runtime Outputs
 ###############################################################################
 
-output "runtime_arn" {
-  description = "ARN of the AgentCore runtime"
-  value       = aws_bedrockagentcore_agent_runtime.main.arn
-}
-
-output "runtime_id" {
-  description = "ID of the AgentCore runtime"
-  value       = aws_bedrockagentcore_agent_runtime.main.id
-}
+## Removed runtime_arn and runtime_id outputs (provider does not export arn/id)
 
 output "runtime_name" {
   description = "Name of the AgentCore runtime"
@@ -27,15 +19,7 @@ output "runtime_name" {
 #### Gateway Outputs
 ###############################################################################
 
-output "gateway_id" {
-  description = "ID of the AgentCore gateway"
-  value       = aws_bedrockagentcore_gateway.main.id
-}
-
-output "gateway_arn" {
-  description = "ARN of the AgentCore gateway"
-  value       = aws_bedrockagentcore_gateway.main.arn
-}
+## Removed gateway_id and gateway_arn outputs (provider does not export arn/id)
 
 ###############################################################################
 #### IAM Outputs
@@ -69,22 +53,10 @@ output "memory_table_arn" {
 #### SSM Parameter Outputs
 ###############################################################################
 
-output "runtime_arn_ssm_parameter" {
-  description = "SSM parameter name for AgentCore runtime ARN"
-  value       = aws_ssm_parameter.agentcore_runtime_arn.name
-}
-
-output "runtime_id_ssm_parameter" {
-  description = "SSM parameter name for AgentCore runtime ID"
-  value       = aws_ssm_parameter.agentcore_runtime_id.name
-}
 
 ## Removed endpoint & qualifier SSM parameter outputs (endpoint resource removed)
 
-output "gateway_id_ssm_parameter" {
-  description = "SSM parameter name for AgentCore gateway ID"
-  value       = aws_ssm_parameter.agentcore_gateway_id.name
-}
+## Removed SSM parameter outputs for runtime/gateway id/arn (parameters deleted)
 
 ###############################################################################
 #### DIY RAG Outputs
