@@ -25,7 +25,8 @@ resource "aws_bedrockagentcore_agent_runtime" "main" {
   agent_runtime_artifact {
     code_configuration {
       # Using ultra-minimal version that only uses bedrock_agentcore (confirmed working)
-      entry_point = ["main_simple.py"]
+      # Switched to basic direct Bedrock invocation runtime (no strands deps)
+      entry_point = ["main_basic_agent.py"]
       # Use currently supported Bedrock AgentCore Python runtime version
       runtime     = "PYTHON_3_12"
       code {
