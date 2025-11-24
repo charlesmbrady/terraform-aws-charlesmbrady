@@ -24,9 +24,7 @@ resource "aws_bedrockagentcore_agent_runtime" "main" {
   # Required artifact configuration - points to managed S3 code package
   agent_runtime_artifact {
     code_configuration {
-      # TEMPORARY: Using minimal test runtime to diagnose platform issues
-      # Switch back to "main.py" once bedrock_agentcore imports are confirmed working
-      entry_point = ["main_minimal.py"]
+      entry_point = ["main.py"]
       # Use currently supported Bedrock AgentCore Python runtime version
       runtime     = "PYTHON_3_12"
       code {
