@@ -21,19 +21,7 @@ output "runtime_name" {
   value       = aws_bedrockagentcore_agent_runtime.main.agent_runtime_name
 }
 
-###############################################################################
-#### Runtime Endpoint Outputs
-###############################################################################
-
-output "endpoint_id" {
-  description = "ID of the AgentCore runtime endpoint"
-  value       = aws_bedrockagentcore_agent_runtime_endpoint.default.id
-}
-
-output "endpoint_url" {
-  description = "URL of the AgentCore runtime endpoint"
-  value       = try(aws_bedrockagentcore_agent_runtime_endpoint.default.endpoint_url, "")
-}
+## Runtime Endpoint outputs removed (endpoint resource deprecated/not present)
 
 ###############################################################################
 #### Gateway Outputs
@@ -91,15 +79,7 @@ output "runtime_id_ssm_parameter" {
   value       = aws_ssm_parameter.agentcore_runtime_id.name
 }
 
-output "endpoint_url_ssm_parameter" {
-  description = "SSM parameter name for AgentCore endpoint URL"
-  value       = aws_ssm_parameter.agentcore_endpoint_url.name
-}
-
-output "qualifier_ssm_parameter" {
-  description = "SSM parameter name for AgentCore qualifier"
-  value       = aws_ssm_parameter.agentcore_runtime_qualifier.name
-}
+## Removed endpoint & qualifier SSM parameter outputs (endpoint resource removed)
 
 output "gateway_id_ssm_parameter" {
   description = "SSM parameter name for AgentCore gateway ID"
@@ -121,6 +101,24 @@ output "rag_bucket_name_ssm_parameter" {
 }
 
 ###############################################################################
+#### Runtime Code Outputs
+###############################################################################
+
+output "runtime_code_bucket_name" {
+  description = "Name of the S3 bucket storing runtime code artifacts"
+  value       = aws_s3_bucket.runtime_code.bucket
+}
+
+output "runtime_code_s3_key" {
+  description = "S3 key of the uploaded runtime code package"
+  value       = aws_s3_object.runtime_code.key
+}
+
+output "runtime_code_version" {
+  description = "Version (ETag) of the runtime code package"
+  value       = aws_s3_object.runtime_code.etag
+}
+
 #### CloudWatch Outputs
 ###############################################################################
 

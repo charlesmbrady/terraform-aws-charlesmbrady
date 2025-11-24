@@ -77,6 +77,12 @@ variable "memory_retention_days" {
   default     = 30
 }
 
+###############################################################################
+#### Agent Runtime Artifact (Code) Source
+###############################################################################
+# Runtime code is automatically packaged and uploaded by Terraform
+# from the runtime_code/ directory in this module
+
 variable "agent_description" {
   type        = string
   description = "Description of the agent's purpose"

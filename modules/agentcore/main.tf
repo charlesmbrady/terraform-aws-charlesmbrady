@@ -12,10 +12,36 @@ locals {
 
 resource "aws_bedrockagentcore_agent_runtime" "main" {
   agent_runtime_name = local.agentcore_name
-  foundation_model   = var.foundation_model
   role_arn           = aws_iam_role.agentcore_runtime.arn
-  instruction        = var.agent_instruction
   description        = var.agent_description
+
+  depends_on = [aws_s3_object.runtime_code]
+
+  # Required artifact configuration - points to managed S3 code package
+  agent_runtime_artifact {
+    code_configuration {
+      entry_point = ["main.py"]
+      runtime     = "PYTHON_3_13"
+      code {
+        s3 {
+          bucket = aws_s3_bucket.runtime_code.id
+          prefix = local.runtime_code_key
+        }
+      }
+    }
+  }
+
+  # Minimal network configuration (PUBLIC or VPC)
+  network_configuration {
+    network_mode = "PUBLIC"
+  }
+
+  # Pass model + instruction + rag bucket to the runtime container/code
+  environment_variables = {
+    AGENT_INSTRUCTION = var.agent_instruction
+    FOUNDATION_MODEL  = var.foundation_model
+    RAG_BUCKET        = var.rag_enabled ? local.rag_bucket_effective_name : ""
+  }
 
   tags = {
     Name        = local.agentcore_name
@@ -27,15 +53,8 @@ resource "aws_bedrockagentcore_agent_runtime" "main" {
 #### AgentCore Runtime Endpoint
 ###############################################################################
 
-resource "aws_bedrockagentcore_agent_runtime_endpoint" "default" {
-  agent_runtime_id = aws_bedrockagentcore_agent_runtime.main.id
-  name             = "${local.agentcore_name}-endpoint"
-
-  tags = {
-    Name        = "${local.agentcore_name}-endpoint-default"
-    Environment = var.environment_tag
-  }
-}
+## NOTE: The prior "aws_bedrockagentcore_agent_runtime_endpoint" resource has been removed.
+## If endpoints become available/required in the provider schema later, reintroduce accordingly.
 
 ###############################################################################
 #### AgentCore Gateway
@@ -43,13 +62,9 @@ resource "aws_bedrockagentcore_agent_runtime_endpoint" "default" {
 
 resource "aws_bedrockagentcore_gateway" "main" {
   name            = "${local.agentcore_name}-gateway"
-  protocol_type   = "REST"
-  authorizer_type = "NONE"
+  protocol_type   = "MCP"     # Valid values: MCP
+  authorizer_type = "AWS_IAM" # Using IAM auth (no JWT authorizer block required)
   role_arn        = aws_iam_role.agentcore_runtime.arn
-
-  agent_runtime_association {
-    agent_runtime_id = aws_bedrockagentcore_agent_runtime.main.id
-  }
 
   tags = {
     Name        = "${local.agentcore_name}-gateway"
@@ -72,13 +87,12 @@ resource "aws_bedrockagentcore_memory" "main" {
   count = var.enable_memory ? 1 : 0
 
   name                  = "${local.agentcore_name}-memory"
-  agent_runtime_id      = aws_bedrockagentcore_agent_runtime.main.id
-  event_expiry_duration = "${var.memory_retention_days * 24}h"
+  event_expiry_duration = var.memory_retention_days # Days (7-365)
+  description           = "Persistent memory for ${local.agentcore_name}"
 
-  memory_storage_configuration {
-    dynamodb_storage_configuration {
-      table_name = aws_dynamodb_table.agentcore_memory.name
-    }
+  tags = {
+    Name        = "${local.agentcore_name}-memory"
+    Environment = var.environment_tag
   }
 }
 
@@ -109,6 +123,56 @@ resource "aws_s3_bucket_public_access_block" "rag_embeddings" {
   block_public_policy     = true
   ignore_public_acls      = true
   restrict_public_buckets = true
+}
+
+###############################################################################
+#### Runtime Code Artifacts Storage (S3)
+###############################################################################
+
+locals {
+  runtime_code_bucket_name = "${local.agentcore_name}-runtime-code"
+  runtime_code_key         = "agent-runtime/code.zip"
+}
+
+# S3 bucket for runtime code artifacts
+resource "aws_s3_bucket" "runtime_code" {
+  bucket        = local.runtime_code_bucket_name
+  force_destroy = true
+
+  tags = {
+    Name        = local.runtime_code_bucket_name
+    Purpose     = "AgentCore-Runtime-Code"
+    Environment = var.environment_tag
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "runtime_code" {
+  bucket                  = aws_s3_bucket.runtime_code.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+# Package runtime code into zip archive
+data "archive_file" "runtime_code" {
+  type        = "zip"
+  source_dir  = "${path.module}/runtime_code"
+  output_path = "${path.module}/.terraform/runtime_code.zip"
+  excludes    = ["package.sh", "README.md", ".DS_Store"]
+}
+
+# Upload runtime code to S3
+resource "aws_s3_object" "runtime_code" {
+  bucket = aws_s3_bucket.runtime_code.id
+  key    = local.runtime_code_key
+  source = data.archive_file.runtime_code.output_path
+  etag   = data.archive_file.runtime_code.output_md5
+
+  tags = {
+    Name        = "agentcore-runtime-code"
+    Environment = var.environment_tag
+  }
 }
 
 resource "aws_ssm_parameter" "rag_bucket_name" {
@@ -155,30 +219,7 @@ resource "aws_ssm_parameter" "agentcore_runtime_id" {
 }
 
 # Store endpoint URL
-resource "aws_ssm_parameter" "agentcore_endpoint_url" {
-  name        = "/${var.project_name}/${var.environment_tag}/agentcore/endpoint-url"
-  description = "URL of the AgentCore runtime endpoint"
-  type        = "String"
-  value       = aws_bedrockagentcore_agent_runtime_endpoint.default.endpoint_url
-
-  tags = {
-    Name        = "agentcore-endpoint-url"
-    Environment = var.environment_tag
-  }
-}
-
-# Store qualifier
-resource "aws_ssm_parameter" "agentcore_runtime_qualifier" {
-  name        = "/${var.project_name}/${var.environment_tag}/agentcore/qualifier"
-  description = "Runtime qualifier for the AgentCore endpoint"
-  type        = "String"
-  value       = "DEFAULT"
-
-  tags = {
-    Name        = "agentcore-qualifier"
-    Environment = var.environment_tag
-  }
-}
+## Removed endpoint & qualifier SSM parameters (endpoint resource removed)
 
 # Store gateway ID
 resource "aws_ssm_parameter" "agentcore_gateway_id" {
