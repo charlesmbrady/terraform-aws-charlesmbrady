@@ -1,11 +1,20 @@
 """
 AgentCore Runtime Entrypoint - Production Code
-Adapted from workshop lab4_runtime.py for Terraform deployment
+Simplified layout: all third-party dependencies can live under `vendored/`.
+We manually extend sys.path so the runtime zip can stay clean.
 """
 
 import os
-import boto3
+import sys
 import traceback
+import boto3
+
+# Inject vendored directory (if present) into sys.path early
+_BASE_DIR = os.path.dirname(__file__)
+_VENDORED = os.path.join(_BASE_DIR, "vendored")
+if os.path.isdir(_VENDORED) and _VENDORED not in sys.path:
+    sys.path.insert(0, _VENDORED)
+    print(f"[startup] Added vendored path: {_VENDORED}")
 
 print("[startup] Beginning runtime import sequence")
 try:
@@ -43,7 +52,12 @@ except Exception as import_err:
 
 # Get AWS region from session (fallback to environment or us-east-1 to avoid None)
 _session_region = boto3.session.Session().region_name
-REGION = _session_region or os.environ.get("AWS_REGION") or os.environ.get("AWS_DEFAULT_REGION") or "us-east-1"
+REGION = (
+    _session_region
+    or os.environ.get("AWS_REGION")
+    or os.environ.get("AWS_DEFAULT_REGION")
+    or "us-east-1"
+)
 if _session_region is None:
     print(f"[startup] Session region was None; using fallback REGION={REGION}")
 
@@ -254,13 +268,18 @@ async def invoke(payload, context=None):
                 "Submit the Anthropic model use case form in the AWS Bedrock console (Model access) "
                 "or switch FOUNDATION_MODEL to an approved model (e.g., amazon.titan-text-premier-v1:0)."
             )
-        if "aws-marketplace:ViewSubscriptions" in err_txt or "aws-marketplace:Subscribe" in err_txt:
+        if (
+            "aws-marketplace:ViewSubscriptions" in err_txt
+            or "aws-marketplace:Subscribe" in err_txt
+        ):
             return (
                 "AWS Marketplace permissions missing for Anthropic model access. "
                 "The IAM role needs aws-marketplace:ViewSubscriptions and aws-marketplace:Subscribe. "
                 "Terraform update in progress—wait 10 minutes after terraform apply completes, then retry."
             )
         return f"Error processing request: {err_txt}"
+
+
 if __name__ == "__main__":
     # Start the HTTP server (listens on port 8080)
     app.run()

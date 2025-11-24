@@ -1,0 +1,13 @@
+# Runtime code vendoring cleanup
+vendored/
+__pycache__/
+*.pyc
+*.pyo
+*.dist-info/
+build/
+runtime_code.zip
+runtime_code_full.zip
+runtime_simple.zip
+runtime.zip
+pillow.libs/
+*_linux-gnu.so
