@@ -15,15 +15,18 @@
 Based on the workshop (lab4_runtime.py), runtime code is **your agent application wrapped in an HTTP server** that:
 
 1. **Receives HTTP requests** at `/invocations` endpoint
+
    - Payload: `{"prompt": "user question"}`
    - Headers: `Authorization: Bearer <jwt-token>`
 
 2. **Extracts environment variables** from Terraform:
+
    - `FOUNDATION_MODEL`: Which Bedrock model to use
    - `AGENT_INSTRUCTION`: System prompt
    - `RAG_BUCKET`: S3 bucket for embeddings
 
 3. **Invokes your Strands Agent**:
+
    - Creates agent with model + tools + system prompt
    - Processes user query
    - Returns text response
@@ -54,22 +57,26 @@ Terraform creates:           AgentCore does:
 The workshop demonstrates the complete journey:
 
 ### Lab 1: Local Prototype
+
 - Basic Strands Agent
 - Tools: get_product_info, get_return_policy, web_search
 - Runs on your laptop
 
 ### Lab 2: Add Memory
+
 - AgentCore Memory for conversation history
 - Semantic + preference strategies
 - Persists across sessions
 
 ### Lab 3: Add Gateway
+
 - AgentCore Gateway for shared tools
 - MCP protocol integration
 - JWT authentication
 - Centralized tool management
 
 ### Lab 4: Deploy to Production ⭐ (This is what we're building)
+
 - **Runtime code** (main.py with BedrockAgentCoreApp)
 - Containerized deployment
 - Auto-scaling
@@ -77,6 +84,7 @@ The workshop demonstrates the complete journey:
 - Production-ready
 
 ### Lab 5: Add Frontend
+
 - Streamlit web UI
 - User authentication
 - Real-time streaming
@@ -95,6 +103,7 @@ Your `main.py` is a **simplified version of Lab 4** that:
 ✅ Returns text responses
 
 ⚠️ Does NOT yet include:
+
 - Memory integration (can add later)
 - Gateway/MCP integration (can add later)
 - Web search tool (requires external API)
@@ -126,6 +135,7 @@ terraform apply
 1. Terraform creates `aws_bedrockagentcore_agent_runtime` resource
 2. AgentCore sees S3 reference in `agent_runtime_artifact` block
 3. AgentCore automatically:
+
    - Creates CodeBuild project
    - Downloads your code from S3
    - Generates Dockerfile
@@ -197,17 +207,17 @@ Don't forget to add `ddgs` to requirements.txt!
 
 ## Comparison: Workshop vs Your Setup
 
-| Aspect | Workshop (lab4_runtime.py) | Your Runtime (main.py) |
-|--------|---------------------------|------------------------|
-| Framework | BedrockAgentCoreApp ✅ | BedrockAgentCoreApp ✅ |
-| Bedrock Model | Claude via Strands ✅ | Claude via Strands ✅ |
-| Tools | 3 local + gateway tools | 2 local tools ✅ |
-| Memory | AgentCore Memory ✅ | Not yet (ready to add) |
-| Gateway | MCP client ✅ | Not yet (ready to add) |
-| Auth | JWT propagation ✅ | Ready (context.request_headers) |
-| Config | SSM parameters | Environment variables ✅ |
-| Deployment | Manual (workshop) | Terraform ✅ |
-| Observability | CloudWatch ✅ | CloudWatch ✅ |
+| Aspect        | Workshop (lab4_runtime.py) | Your Runtime (main.py)          |
+| ------------- | -------------------------- | ------------------------------- |
+| Framework     | BedrockAgentCoreApp ✅     | BedrockAgentCoreApp ✅          |
+| Bedrock Model | Claude via Strands ✅      | Claude via Strands ✅           |
+| Tools         | 3 local + gateway tools    | 2 local tools ✅                |
+| Memory        | AgentCore Memory ✅        | Not yet (ready to add)          |
+| Gateway       | MCP client ✅              | Not yet (ready to add)          |
+| Auth          | JWT propagation ✅         | Ready (context.request_headers) |
+| Config        | SSM parameters             | Environment variables ✅        |
+| Deployment    | Manual (workshop)          | Terraform ✅                    |
+| Observability | CloudWatch ✅              | CloudWatch ✅                   |
 
 ## Key Differences from Workshop
 

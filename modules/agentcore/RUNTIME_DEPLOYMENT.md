@@ -55,6 +55,7 @@ terraform apply
 ## What Happens During Deployment
 
 1. **Terraform creates**:
+
    - AgentCore Runtime resource
    - IAM execution role
    - DynamoDB table (if memory enabled)
@@ -62,6 +63,7 @@ terraform apply
    - CloudWatch log group
 
 2. **AgentCore automatically**:
+
    - Creates CodeBuild project
    - Pulls your code from S3
    - Builds Docker container

@@ -76,6 +76,7 @@ AgentCore will:
 ## Environment Variables
 
 Terraform passes these via `environment_variables` block:
+
 - `FOUNDATION_MODEL`: Model ID (e.g., `anthropic.claude-3-5-sonnet-20240620-v1:0`)
 - `AGENT_INSTRUCTION`: System prompt for the agent
 - `RAG_BUCKET`: S3 bucket for DIY RAG embeddings
@@ -94,6 +95,7 @@ python main.py
 ```
 
 Then in another terminal:
+
 ```bash
 curl -X POST http://localhost:8080/invocations \
   -H "Content-Type: application/json" \
@@ -103,10 +105,12 @@ curl -X POST http://localhost:8080/invocations \
 ## Production Integration Example
 
 See the workshop lab files for a full example:
+
 - `lab-04-agentcore-runtime.ipynb`: Full integration with Strands + Memory + Gateway
 - `lab_helpers/lab4_runtime.py`: Complete production-ready code
 
 The workshop shows how to:
+
 - Connect to AgentCore Gateway for shared tools
 - Use AgentCore Memory for conversation history
 - Propagate JWT tokens for authentication

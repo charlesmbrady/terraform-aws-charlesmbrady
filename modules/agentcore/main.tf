@@ -105,7 +105,10 @@ resource "aws_bedrockagentcore_memory" "main" {
 ###############################################################################
 
 locals {
-  rag_bucket_effective_name = var.rag_bucket_name != "" ? var.rag_bucket_name : "${local.agentcore_name}-rag-embeddings"
+  # S3 bucket naming must be lowercase letters, numbers, and hyphens (no underscores, no uppercase).
+  # Derive a base from agentcore_name by replacing underscores with hyphens and lowercasing.
+  agentcore_bucket_base     = lower(replace(local.agentcore_name, "_", "-"))
+  rag_bucket_effective_name = var.rag_bucket_name != "" ? lower(replace(var.rag_bucket_name, "_", "-")) : "${local.agentcore_bucket_base}-rag-embeddings"
 }
 
 resource "aws_s3_bucket" "rag_embeddings" {
@@ -134,7 +137,7 @@ resource "aws_s3_bucket_public_access_block" "rag_embeddings" {
 ###############################################################################
 
 locals {
-  runtime_code_bucket_name = "${local.agentcore_name}-runtime-code"
+  runtime_code_bucket_name = "${local.agentcore_bucket_base}-runtime-code"
   runtime_code_key         = "agent-runtime/code.zip"
 }
 
