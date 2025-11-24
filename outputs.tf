@@ -69,10 +69,8 @@ output "agentcore_memory_table_name" {
 #   value       = module.agentcore.gateway_id_ssm_parameter
 # }
 
-output "agentcore_log_group_name" {
-  description = "CloudWatch log group name for AgentCore"
-  value       = module.agentcore.log_group_name
-}
+## NOTE: Manual log group was removed from module; runtime log groups are
+## created automatically by the service. Removed obsolete agentcore_log_group_name output.
 
 output "agentcore_rag_bucket_name" {
   description = "S3 bucket name storing DIY RAG embeddings (if enabled)"
