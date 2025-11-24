@@ -5,10 +5,33 @@ Adapted from workshop lab4_runtime.py for Terraform deployment
 
 import os
 import boto3
-from bedrock_agentcore.runtime import BedrockAgentCoreApp
-from strands import Agent
-from strands.models import BedrockModel
-from strands.tools import tool
+import traceback
+
+print("[startup] Beginning runtime import sequence")
+try:
+    from bedrock_agentcore.runtime import BedrockAgentCoreApp
+    from strands import Agent
+    from strands.models import BedrockModel
+    from strands.tools import tool
+    print("[startup] Imported bedrock_agentcore + strands successfully")
+except Exception as import_err:
+    print(f"[startup-error] Import failure: {import_err}\n{traceback.format_exc()}")
+    # Fallback minimal shim so container still responds; tools disabled
+    class BedrockAgentCoreApp:
+        def entrypoint(self, fn):
+            self._fn = fn
+            return fn
+        def run(self):
+            print("[fallback] Running minimal app server")
+        def __call__(self, *args, **kwargs):
+            return self._fn(*args, **kwargs)
+    class Agent:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+        def __call__(self, prompt):
+            return {"message": {"content": [{"text": f"(fallback) Echo: {prompt}"}]}}
+    def tool(fn):
+        return fn
 
 # Get AWS region from session
 REGION = boto3.session.Session().region_name
@@ -23,11 +46,17 @@ RAG_BUCKET = os.environ.get("RAG_BUCKET", "")
 # System prompt from environment or default
 SYSTEM_PROMPT = AGENT_INSTRUCTION
 
-# Initialize Bedrock model
-model = BedrockModel(model_id=MODEL_ID, region_name=REGION)
+# Initialize Bedrock model (guard if strands import failed)
+try:
+    model = BedrockModel(model_id=MODEL_ID, region_name=REGION)
+    print(f"[startup] Initialized BedrockModel {MODEL_ID} region {REGION}")
+except Exception as model_err:
+    print(f"[startup-error] Model init failed: {model_err}\n{traceback.format_exc()}")
+    model = None
 
 # Initialize the AgentCore Runtime App
 app = BedrockAgentCoreApp()
+print("[startup] App initialized")
 
 
 # ============================================================================
@@ -184,6 +213,12 @@ async def invoke(payload, context=None):
             get_product_info,
             get_return_policy,
         ]
+
+        if model is None:
+            print("[invoke] Model unavailable; using fallback agent")
+            agent = Agent()
+            response = agent(user_input)
+            return response["message"]["content"][0]["text"]
 
         # Create the agent with tools
         agent = Agent(
