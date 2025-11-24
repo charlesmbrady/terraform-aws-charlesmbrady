@@ -2,6 +2,7 @@
 AgentCore Runtime Entrypoint - Production Code
 Adapted from workshop lab4_runtime.py for Terraform deployment
 """
+
 import os
 import boto3
 from bedrock_agentcore.runtime import BedrockAgentCoreApp
@@ -13,7 +14,9 @@ from strands.tools import tool
 REGION = boto3.session.Session().region_name
 
 # Read configuration from environment variables (set by Terraform)
-MODEL_ID = os.environ.get("FOUNDATION_MODEL", "anthropic.claude-3-5-sonnet-20240620-v1:0")
+MODEL_ID = os.environ.get(
+    "FOUNDATION_MODEL", "anthropic.claude-3-5-sonnet-20240620-v1:0"
+)
 AGENT_INSTRUCTION = os.environ.get("AGENT_INSTRUCTION", "You are a helpful assistant.")
 RAG_BUCKET = os.environ.get("RAG_BUCKET", "")
 
@@ -31,11 +34,12 @@ app = BedrockAgentCoreApp()
 # TOOLS - Define your agent's capabilities
 # ============================================================================
 
+
 @tool
 def get_product_info(product_type: str) -> str:
     """
     Get detailed technical specifications and information for electronics products.
-    
+
     Args:
         product_type: Electronics product type (e.g., 'laptops', 'smartphones', 'headphones', 'monitors')
     Returns:
@@ -89,10 +93,10 @@ def get_product_info(product_type: str) -> str:
 def get_return_policy(product_category: str) -> str:
     """
     Get return policy information for a specific product category.
-    
+
     Args:
         product_category: Electronics category (e.g., 'smartphones', 'laptops', 'accessories')
-    
+
     Returns:
         Formatted return policy details including timeframes and conditions
     """
@@ -148,49 +152,50 @@ def get_return_policy(product_category: str) -> str:
 # ENTRYPOINT - AgentCore Runtime invocation handler
 # ============================================================================
 
+
 @app.entrypoint
 async def invoke(payload, context=None):
     """
     AgentCore Runtime entrypoint function.
     Processes user prompts and returns agent responses.
-    
+
     Args:
         payload: dict with user input (e.g., {"prompt": "Hello"})
         context: request context (headers, metadata, etc.)
-    
+
     Returns:
         Agent response text
     """
     user_input = payload.get("prompt", "")
-    
+
     # Access request headers (for future Gateway/Auth integration)
     request_headers = context.request_headers or {} if context else {}
     auth_header = request_headers.get("Authorization", "")
-    
+
     # Log invocation (visible in CloudWatch)
     print(f"Received prompt: {user_input}")
     print(f"Model: {MODEL_ID}")
     print(f"RAG Bucket: {RAG_BUCKET or 'Not configured'}")
     print(f"Auth header present: {bool(auth_header)}")
-    
+
     try:
         # Define available tools
         tools = [
             get_product_info,
             get_return_policy,
         ]
-        
+
         # Create the agent with tools
         agent = Agent(
             model=model,
             tools=tools,
             system_prompt=SYSTEM_PROMPT,
         )
-        
+
         # Invoke the agent
         response = agent(user_input)
         return response.message["content"][0]["text"]
-        
+
     except Exception as e:
         print(f"Agent invocation error: {str(e)}")
         return f"Error processing request: {str(e)}"
