@@ -3,7 +3,8 @@
 ###############################################################################
 
 locals {
-  agentcore_name = "${var.project_name}-${var.agent_name}-${var.environment_tag}"
+  # Use underscores instead of hyphens to comply with AWS naming regex: ^[a-zA-Z][a-zA-Z0-9_]{0,47}$
+  agentcore_name = replace("${var.project_name}_${var.agent_name}_${var.environment_tag}", "-", "_")
 }
 
 ###############################################################################
