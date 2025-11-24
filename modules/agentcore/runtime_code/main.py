@@ -57,6 +57,7 @@ except Exception as model_err:
 # Initialize the AgentCore Runtime App
 app = BedrockAgentCoreApp()
 print("[startup] App initialized")
+print(f"[startup] ✓ Runtime ready - Model: {MODEL_ID}, Region: {REGION}")
 
 
 # ============================================================================
@@ -189,13 +190,14 @@ async def invoke(payload, context=None):
     Processes user prompts and returns agent responses.
 
     Args:
-        payload: dict with user input (e.g., {"prompt": "Hello"})
+        payload: dict with user input (e.g., {"prompt": "Hello"} or {"input": "Hello"})
         context: request context (headers, metadata, etc.)
 
     Returns:
         Agent response text
     """
-    user_input = payload.get("prompt", "")
+    # Support both 'input' (Agent Sandbox) and 'prompt' (custom invocations)
+    user_input = payload.get("input") or payload.get("prompt", "")
 
     # Access request headers (for future Gateway/Auth integration)
     request_headers = context.request_headers or {} if context else {}
