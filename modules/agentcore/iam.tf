@@ -15,17 +15,10 @@ data "aws_iam_policy_document" "agentcore_assume_role" {
   statement {
     effect = "Allow"
     principals {
-      type = "Service"
-      identifiers = [
-        "bedrock.amazonaws.com"
-      ]
+      type        = "Service"
+      identifiers = ["bedrock.amazonaws.com"]
     }
     actions = ["sts:AssumeRole"]
-    condition {
-      test     = "StringEquals"
-      variable = "aws:SourceAccount"
-      values   = [var.account_id]
-    }
   }
 }
 
