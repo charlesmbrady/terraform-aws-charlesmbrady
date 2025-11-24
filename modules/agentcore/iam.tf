@@ -16,7 +16,7 @@ data "aws_iam_policy_document" "agentcore_assume_role" {
     effect = "Allow"
     principals {
       type        = "Service"
-      identifiers = ["bedrock.amazonaws.com"]
+      identifiers = ["bedrock-agentcore.amazonaws.com"]
     }
     actions = ["sts:AssumeRole"]
   }
@@ -82,17 +82,60 @@ data "aws_iam_policy_document" "agentcore_runtime_policy" {
     ]
   }
 
-  # Allow CloudWatch Logs
+  # Allow CloudWatch Logs for AgentCore runtimes (path from workshop)
   statement {
     sid    = "CloudWatchLogs"
     effect = "Allow"
     actions = [
+      "logs:DescribeLogStreams",
       "logs:CreateLogGroup",
+      "logs:DescribeLogGroups",
       "logs:CreateLogStream",
       "logs:PutLogEvents"
     ]
     resources = [
-      "arn:aws:logs:${var.region}:${var.account_id}:log-group:/aws/bedrock/agentcore/*"
+      "arn:aws:logs:${var.region}:${var.account_id}:log-group:/aws/bedrock-agentcore/runtimes/*"
+    ]
+  }
+
+  # Observability (X-Ray tracing)
+  statement {
+    sid    = "XRayTracing"
+    effect = "Allow"
+    actions = [
+      "xray:PutTraceSegments",
+      "xray:PutTelemetryRecords",
+      "xray:GetSamplingRules",
+      "xray:GetSamplingTargets"
+    ]
+    resources = ["*"]
+  }
+
+  # Metrics publishing with namespace condition
+  statement {
+    sid    = "CloudWatchMetrics"
+    effect = "Allow"
+    actions = ["cloudwatch:PutMetricData"]
+    resources = ["*"]
+    condition {
+      test     = "StringEquals"
+      variable = "cloudwatch:namespace"
+      values   = ["bedrock-agentcore"]
+    }
+  }
+
+  # Workload access token retrieval
+  statement {
+    sid    = "WorkloadAccessToken"
+    effect = "Allow"
+    actions = [
+      "bedrock-agentcore:GetWorkloadAccessToken",
+      "bedrock-agentcore:GetWorkloadAccessTokenForJWT",
+      "bedrock-agentcore:GetWorkloadAccessTokenForUserId"
+    ]
+    resources = [
+      "arn:aws:bedrock-agentcore:${var.region}:${var.account_id}:workload-identity-directory/default",
+      "arn:aws:bedrock-agentcore:${var.region}:${var.account_id}:workload-identity-directory/default/workload-identity/*"
     ]
   }
 
