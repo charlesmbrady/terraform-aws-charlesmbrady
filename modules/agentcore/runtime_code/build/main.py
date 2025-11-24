@@ -1,22 +1,39 @@
 """
-AgentCore Runtime - Simplified Production Version
-Uses only pre-installed runtime dependencies (bedrock_agentcore, strands)
+AgentCore Runtime Entrypoint - Production Code
+Adapted from workshop lab4_runtime.py for Terraform deployment
 """
 
 import os
-import json
+import boto3
+import traceback
 
 print("[startup] Beginning runtime import sequence")
-
-from bedrock_agentcore.runtime import BedrockAgentCoreApp
-from strands import Agent
-from strands.models import BedrockModel
-from strands.tools import tool
-
-print("[startup] ✓ Imported bedrock_agentcore + strands successfully")
+try:
+    from bedrock_agentcore.runtime import BedrockAgentCoreApp
+    from strands import Agent
+    from strands.models import BedrockModel
+    from strands.tools import tool
+    print("[startup] Imported bedrock_agentcore + strands successfully")
+except Exception as import_err:
+    print(f"[startup-error] Import failure: {import_err}\n{traceback.format_exc()}")
+    # Fallback minimal shim so container still responds; tools disabled
+    class BedrockAgentCoreApp:
+        def entrypoint(self, fn):
+            self._fn = fn
+            return fn
+        def run(self):
+            print("[fallback] Running minimal app server")
+        def __call__(self, *args, **kwargs):
+            return self._fn(*args, **kwargs)
+    class Agent:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+        def __call__(self, prompt):
+            return {"message": {"content": [{"text": f"(fallback) Echo: {prompt}"}]}}
+    def tool(fn):
+        return fn
 
 # Get AWS region from session
-import boto3
 REGION = boto3.session.Session().region_name
 
 # Read configuration from environment variables (set by Terraform)
@@ -26,16 +43,21 @@ MODEL_ID = os.environ.get(
 AGENT_INSTRUCTION = os.environ.get("AGENT_INSTRUCTION", "You are a helpful assistant.")
 RAG_BUCKET = os.environ.get("RAG_BUCKET", "")
 
-print(f"[startup] Model: {MODEL_ID}")
-print(f"[startup] Region: {REGION}")
-print(f"[startup] RAG Bucket: {RAG_BUCKET or 'Not configured'}")
+# System prompt from environment or default
+SYSTEM_PROMPT = AGENT_INSTRUCTION
 
-# Initialize Bedrock model
-model = BedrockModel(model_id=MODEL_ID, region_name=REGION)
-print(f"[startup] ✓ Initialized BedrockModel")
+# Initialize Bedrock model (guard if strands import failed)
+try:
+    model = BedrockModel(model_id=MODEL_ID, region_name=REGION)
+    print(f"[startup] Initialized BedrockModel {MODEL_ID} region {REGION}")
+except Exception as model_err:
+    print(f"[startup-error] Model init failed: {model_err}\n{traceback.format_exc()}")
+    model = None
 
 # Initialize the AgentCore Runtime App
 app = BedrockAgentCoreApp()
+print("[startup] App initialized")
+print(f"[startup] ✓ Runtime ready - Model: {MODEL_ID}, Region: {REGION}")
 
 
 # ============================================================================
@@ -155,6 +177,7 @@ def get_return_policy(product_category: str) -> str:
         f"• Warranty: {policy['warranty']}"
     )
 
+
 # ============================================================================
 # ENTRYPOINT - AgentCore Runtime invocation handler
 # ============================================================================
@@ -181,9 +204,10 @@ async def invoke(payload, context=None):
     auth_header = request_headers.get("Authorization", "")
 
     # Log invocation (visible in CloudWatch)
-    print(f"[invoke] Received input: {user_input}")
-    print(f"[invoke] Model: {MODEL_ID}")
-    print(f"[invoke] Auth header present: {bool(auth_header)}")
+    print(f"Received prompt: {user_input}")
+    print(f"Model: {MODEL_ID}")
+    print(f"RAG Bucket: {RAG_BUCKET or 'Not configured'}")
+    print(f"Auth header present: {bool(auth_header)}")
 
     try:
         # Define available tools
@@ -192,28 +216,28 @@ async def invoke(payload, context=None):
             get_return_policy,
         ]
 
+        if model is None:
+            print("[invoke] Model unavailable; using fallback agent")
+            agent = Agent()
+            response = agent(user_input)
+            return response["message"]["content"][0]["text"]
+
         # Create the agent with tools
         agent = Agent(
             model=model,
             tools=tools,
-            system_prompt=AGENT_INSTRUCTION,
+            system_prompt=SYSTEM_PROMPT,
         )
 
         # Invoke the agent
-        print("[invoke] Calling agent...")
         response = agent(user_input)
-        result = response.message["content"][0]["text"]
-        print(f"[invoke] Response length: {len(result)} chars")
-        return result
+        return response.message["content"][0]["text"]
 
     except Exception as e:
-        import traceback
-        error_msg = f"Agent invocation error: {str(e)}"
-        print(f"[invoke-error] {error_msg}")
-        print(f"[invoke-error] Traceback:\n{traceback.format_exc()}")
-        return error_msg
+        print(f"Agent invocation error: {str(e)}")
+        return f"Error processing request: {str(e)}"
 
 
 if __name__ == "__main__":
-    print("[startup] Starting app.run()")
+    # Start the HTTP server (listens on port 8080)
     app.run()
