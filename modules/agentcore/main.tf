@@ -5,6 +5,9 @@
 locals {
   # Use underscores instead of hyphens to comply with AWS naming regex: ^[a-zA-Z][a-zA-Z0-9_]{0,47}$
   agentcore_name = replace("${var.project_name}_${var.agent_name}_${var.environment_tag}", "-", "_")
+  
+  # Gateway requires hyphen-based naming: ^([0-9a-zA-Z][-]?){1,100}$
+  gateway_name = "${var.project_name}-${var.agent_name}-${var.environment_tag}-gateway"
 }
 
 ###############################################################################
@@ -62,13 +65,13 @@ resource "aws_bedrockagentcore_agent_runtime" "main" {
 ###############################################################################
 
 resource "aws_bedrockagentcore_gateway" "main" {
-  name            = "${local.agentcore_name}-gateway"
+  name            = local.gateway_name
   protocol_type   = "MCP"     # Valid values: MCP
   authorizer_type = "AWS_IAM" # Using IAM auth (no JWT authorizer block required)
   role_arn        = aws_iam_role.agentcore_runtime.arn
 
   tags = {
-    Name        = "${local.agentcore_name}-gateway"
+    Name        = local.gateway_name
     Environment = var.environment_tag
   }
 }
@@ -87,12 +90,12 @@ resource "aws_bedrockagentcore_gateway" "main" {
 resource "aws_bedrockagentcore_memory" "main" {
   count = var.enable_memory ? 1 : 0
 
-  name                  = "${local.agentcore_name}-memory"
+  name                  = "${local.agentcore_name}_memory"
   event_expiry_duration = var.memory_retention_days # Days (7-365)
   description           = "Persistent memory for ${local.agentcore_name}"
 
   tags = {
-    Name        = "${local.agentcore_name}-memory"
+    Name        = "${local.agentcore_name}_memory"
     Environment = var.environment_tag
   }
 }
