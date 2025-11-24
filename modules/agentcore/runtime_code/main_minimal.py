@@ -17,6 +17,7 @@ print("[startup] ✓ Imported bedrock_agentcore + strands successfully")
 
 # Get AWS region from session
 import boto3
+
 REGION = boto3.session.Session().region_name
 
 # Read configuration from environment variables (set by Terraform)
@@ -155,6 +156,7 @@ def get_return_policy(product_category: str) -> str:
         f"• Warranty: {policy['warranty']}"
     )
 
+
 # ============================================================================
 # ENTRYPOINT - AgentCore Runtime invocation handler
 # ============================================================================
@@ -208,6 +210,7 @@ async def invoke(payload, context=None):
 
     except Exception as e:
         import traceback
+
         error_msg = f"Agent invocation error: {str(e)}"
         print(f"[invoke-error] {error_msg}")
         print(f"[invoke-error] Traceback:\n{traceback.format_exc()}")
