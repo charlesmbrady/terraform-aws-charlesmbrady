@@ -13,28 +13,39 @@ try:
     from strands import Agent
     from strands.models import BedrockModel
     from strands.tools import tool
+
     print("[startup] Imported bedrock_agentcore + strands successfully")
 except Exception as import_err:
     print(f"[startup-error] Import failure: {import_err}\n{traceback.format_exc()}")
+
     # Fallback minimal shim so container still responds; tools disabled
     class BedrockAgentCoreApp:
         def entrypoint(self, fn):
             self._fn = fn
             return fn
+
         def run(self):
             print("[fallback] Running minimal app server")
+
         def __call__(self, *args, **kwargs):
             return self._fn(*args, **kwargs)
+
     class Agent:
         def __init__(self, **kwargs):
             self.kwargs = kwargs
+
         def __call__(self, prompt):
             return {"message": {"content": [{"text": f"(fallback) Echo: {prompt}"}]}}
+
     def tool(fn):
         return fn
 
-# Get AWS region from session
-REGION = boto3.session.Session().region_name
+
+# Get AWS region from session (fallback to environment or us-east-1 to avoid None)
+_session_region = boto3.session.Session().region_name
+REGION = _session_region or os.environ.get("AWS_REGION") or os.environ.get("AWS_DEFAULT_REGION") or "us-east-1"
+if _session_region is None:
+    print(f"[startup] Session region was None; using fallback REGION={REGION}")
 
 # Read configuration from environment variables (set by Terraform)
 MODEL_ID = os.environ.get(
@@ -234,10 +245,22 @@ async def invoke(payload, context=None):
         return response.message["content"][0]["text"]
 
     except Exception as e:
-        print(f"Agent invocation error: {str(e)}")
-        return f"Error processing request: {str(e)}"
-
-
+        err_txt = str(e)
+        print(f"Agent invocation error: {err_txt}")
+        # Detect Anthropic model gating message and provide clearer guidance
+        if "Model use case details" in err_txt and "Anthropic" in err_txt:
+            return (
+                "Anthropic model access not yet enabled for this account. "
+                "Submit the Anthropic model use case form in the AWS Bedrock console (Model access) "
+                "or switch FOUNDATION_MODEL to an approved model (e.g., amazon.titan-text-premier-v1:0)."
+            )
+        if "aws-marketplace:ViewSubscriptions" in err_txt or "aws-marketplace:Subscribe" in err_txt:
+            return (
+                "AWS Marketplace permissions missing for Anthropic model access. "
+                "The IAM role needs aws-marketplace:ViewSubscriptions and aws-marketplace:Subscribe. "
+                "Terraform update in progress—wait 10 minutes after terraform apply completes, then retry."
+            )
+        return f"Error processing request: {err_txt}"
 if __name__ == "__main__":
     # Start the HTTP server (listens on port 8080)
     app.run()

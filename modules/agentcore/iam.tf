@@ -52,6 +52,17 @@ data "aws_iam_policy_document" "agentcore_runtime_policy" {
     ]
   }
 
+  # AWS Marketplace permissions for Anthropic model access
+  statement {
+    sid    = "MarketplaceModelAccess"
+    effect = "Allow"
+    actions = [
+      "aws-marketplace:ViewSubscriptions",
+      "aws-marketplace:Subscribe"
+    ]
+    resources = ["*"]
+  }
+
   # Allow invoking tool Lambda functions
   statement {
     sid    = "InvokeLambdaTools"
