@@ -25,7 +25,8 @@ resource "aws_bedrockagentcore_agent_runtime" "main" {
   agent_runtime_artifact {
     code_configuration {
       entry_point = ["main.py"]
-      runtime     = "PYTHON_3_13"
+      # Use currently supported Bedrock AgentCore Python runtime version
+      runtime     = "PYTHON_3_12"
       code {
         s3 {
           bucket = aws_s3_bucket.runtime_code.id
@@ -207,13 +208,9 @@ resource "aws_ssm_parameter" "rag_bucket_name" {
 #### CloudWatch Log Group for AgentCore
 ###############################################################################
 
-resource "aws_cloudwatch_log_group" "agentcore" {
-  name              = "/aws/bedrock/agentcore/${local.agentcore_name}"
-  retention_in_days = 30
-
-  tags = {
-    Name        = "${local.agentcore_name}-logs"
-    Environment = var.environment_tag
-  }
-}
+## NOTE: Do not pre-create a custom CloudWatch log group. The service creates
+## log groups under /aws/bedrock-agentcore/runtimes/ automatically. Pre-creating
+## a mismatched path (e.g. /aws/bedrock/agentcore/...) leads to confusion when
+## logs appear empty. Retaining no manual log group ensures correct automatic
+## log stream generation.
 

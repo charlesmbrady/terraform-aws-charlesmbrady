@@ -91,18 +91,12 @@ output "runtime_code_version" {
   value       = aws_s3_object.runtime_code.etag
 }
 
-#### CloudWatch Outputs
+#### CloudWatch Outputs (No manual log group)
 ###############################################################################
 
-output "log_group_name" {
-  description = "CloudWatch log group name for AgentCore"
-  value       = aws_cloudwatch_log_group.agentcore.name
-}
-
-output "log_group_arn" {
-  description = "CloudWatch log group ARN for AgentCore"
-  value       = aws_cloudwatch_log_group.agentcore.arn
-}
+# NOTE: Runtime log groups are created automatically under:
+# /aws/bedrock-agentcore/runtimes/<runtime-id>-<agentcore_name>/runtime-logs
+# Explicit outputs removed because we no longer create a fixed log group.
 
 ###############################################################################
 #### Composite Outputs
