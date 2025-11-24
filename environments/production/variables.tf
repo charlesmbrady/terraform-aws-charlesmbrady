@@ -21,6 +21,6 @@ variable "account_id" {
 variable "rsa_decrypt_key_prod_b64" {
   type        = string
   description = "The base64 encoded private key to use for decryption."
-  default = null
-  sensitive = true
+  default     = null
+  sensitive   = true
 }

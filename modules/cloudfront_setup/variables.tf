@@ -21,5 +21,5 @@ variable "root_project_name_prefix" {
 
 variable "alias_name" {
   type = string
-  
+
 }

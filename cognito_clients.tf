@@ -1,11 +1,11 @@
 locals {
-  allowed_oauth_flows = ["code"]
+  allowed_oauth_flows                  = ["code"]
   allowed_oauth_flows_user_pool_client = true
-  allowed_oauth_scopes = ["email", "openid", "profile", "aws.cognito.signin.user.admin"]
-  supported_identity_providers = ["COGNITO"]
-  access_token_validity = 1
-  id_token_validity = 1
-  refresh_token_validity = 30
+  allowed_oauth_scopes                 = ["email", "openid", "profile", "aws.cognito.signin.user.admin"]
+  supported_identity_providers         = ["COGNITO"]
+  access_token_validity                = 1
+  id_token_validity                    = 1
+  refresh_token_validity               = 30
 }
 
 resource "aws_cognito_user_pool_client" "mockdat" {
