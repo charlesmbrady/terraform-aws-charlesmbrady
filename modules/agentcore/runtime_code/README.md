@@ -1,118 +1,132 @@
 # AgentCore Runtime Code
 
-This directory contains the runtime code that AgentCore deploys as a containerized service.
+This directory contains the Python runtime code deployed by Terraform to AWS Bedrock AgentCore.
 
-## What's Here
+## Structure
 
-- **main.py**: HTTP server entrypoint with `@app.entrypoint` decorator
-- **requirements.txt**: Python dependencies for the runtime container
+- **main.py**: Production runtime with Strands Agent framework and tools
+- **requirements.txt**: Python dependencies (workshop-aligned versions)
+- **rebuild_vendored.sh**: Script to install deps into `vendored/` subdirectory
+- **.gitignore**: Excludes vendored packages and build artifacts from git
 
 ## How It Works
 
-1. **Terraform** uploads this code to S3 (zipped)
-2. **AgentCore Runtime** pulls the code from S3
-3. **CodeBuild** builds a Docker container with this code
-4. **ECR** stores the container image
-5. **AgentCore** deploys the container and routes traffic to it
+1. **Terraform** zips this directory using `archive_file` data source
+2. **Terraform** uploads zip to S3 runtime code bucket
+3. **AgentCore Runtime** pulls code from S3, builds container, and deploys
+4. Runtime starts HTTP server listening on port 8080
 
-## Current Status
+## Environment Variables (Set by Terraform)
 
-This is a **production-ready runtime** that:
+- `FOUNDATION_MODEL`: Bedrock model ID (e.g., `anthropic.claude-3-5-sonnet-20240620-v1:0`)
+- `AGENT_INSTRUCTION`: System prompt for the agent
+- `RAG_BUCKET`: S3 bucket name for RAG embeddings (if enabled)
 
-- ✅ Satisfies AgentCore's artifact requirement
-- ✅ Responds to `/invocations` and `/ping` endpoints
-- ✅ Reads environment variables from Terraform
-- ✅ Logs to CloudWatch
-- ✅ Invokes Bedrock models via Strands Agent
-- ✅ Includes two customer support tools (get_product_info, get_return_policy)
-- ⚠️ Memory integration ready but not enabled (requires memory_id)
-- ⚠️ Gateway integration ready but not enabled (requires gateway auth)
+## Current Features
 
-## To Deploy Your Actual Agent
+✅ Strands Agent with Bedrock model invocation
+✅ Two tools: `get_product_info`, `get_return_policy`
+✅ CloudWatch logging
+✅ Graceful error handling
+✅ Support for vendored dependencies
 
-The runtime code is ready! To deploy:
+## Deployment Workflow
 
-### Step 1: Package the runtime code
+### Option 1: Let Terraform Handle Everything (Simple)
 
 ```bash
-cd modules/agentcore/runtime_code
-./package.sh
-```
-
-### Step 2: Upload to S3
-
-Create an S3 bucket (or use existing) and upload:
-
-```bash
-aws s3 mb s3://YOUR-AGENTCORE-BUCKET
-aws s3 cp ../runtime_code.zip s3://YOUR-AGENTCORE-BUCKET/agent-runtime/code.zip
-```
-
-### Step 3: Update Terraform variables
-
-In your Terraform Cloud workspace or `terraform.tfvars`:
-
-```hcl
-agent_runtime_code_bucket = "YOUR-AGENTCORE-BUCKET"
-agent_runtime_code_prefix = "agent-runtime/code.zip"
-```
-
-### Step 4: Deploy via Terraform
-
-```bash
-cd ../../..  # Back to terraform root
-terraform init -upgrade
+# From terraform root
+cd /Users/charlesbrady/Desktop/Charlava_25/terraform-aws-charlesmbrady
 terraform apply
 ```
 
-AgentCore will:
+Terraform will automatically:
 
-1. Pull your code from S3
-2. Build a Docker container with CodeBuild
-3. Push to ECR
-4. Deploy as a scalable runtime
-5. Route traffic to your agent
+- Zip runtime_code directory
+- Upload to S3
+- Trigger AgentCore runtime update
 
-## Environment Variables
+### Option 2: Manual Dependency Install + Override (Advanced)
 
-Terraform passes these via `environment_variables` block:
+Use this when you need ARM64-specific wheels or want full control:
 
-- `FOUNDATION_MODEL`: Model ID (e.g., `anthropic.claude-3-5-sonnet-20240620-v1:0`)
-- `AGENT_INSTRUCTION`: System prompt for the agent
-- `RAG_BUCKET`: S3 bucket for DIY RAG embeddings
+```bash
+# 1. Install dependencies into vendored/
+cd modules/agentcore/runtime_code
+chmod +x rebuild_vendored.sh
+./rebuild_vendored.sh
+
+# 2. Package everything
+zip -r runtime_code.zip main.py vendored -x "*.pyc" "__pycache__/*"
+
+# 3. Upload to S3 (overrides Terraform-managed object)
+aws s3 cp runtime_code.zip s3://charlesmbrady-assistant-test-runtime-code/agent-runtime/code.zip
+
+# 4. Force runtime recreation
+cd ../../..
+terraform taint module.agentcore.aws_bedrockagentcore_agent_runtime.main
+terraform apply
+```
+
+## Updating the Agent
+
+1. Edit `main.py` (add/modify tools or logic)
+2. Run `terraform apply` or use Option 2 workflow above
+3. Monitor CloudWatch logs: `/aws/bedrock-agentcore/runtimes/`
 
 ## Testing Locally
 
-You can test the runtime locally before deploying:
-
 ```bash
-cd runtime_code
 pip install -r requirements.txt
-export FOUNDATION_MODEL="claude-3-5-sonnet"
-export AGENT_INSTRUCTION="You are helpful"
-export RAG_BUCKET="my-rag-bucket"
+export FOUNDATION_MODEL="anthropic.claude-3-5-sonnet-20240620-v1:0"
+export AGENT_INSTRUCTION="You are a helpful assistant."
+export RAG_BUCKET="your-rag-bucket"
 python main.py
 ```
 
-Then in another terminal:
+Then test:
 
 ```bash
 curl -X POST http://localhost:8080/invocations \
   -H "Content-Type: application/json" \
-  -d '{"prompt": "Hello, are you working?"}'
+  -d '{"input": "What laptops do you have?"}'
 ```
 
-## Production Integration Example
+## Adding Tools
 
-See the workshop lab files for a full example:
+Edit `main.py` and add a function decorated with `@tool`:
 
-- `lab-04-agentcore-runtime.ipynb`: Full integration with Strands + Memory + Gateway
-- `lab_helpers/lab4_runtime.py`: Complete production-ready code
+```python
+@tool
+def check_order_status(order_id: str) -> str:
+    """Check order status by ID."""
+    # Your logic here
+    return f"Order {order_id}: Shipped"
 
-The workshop shows how to:
+# Add to tools list in invoke() function
+tools = [get_product_info, get_return_policy, check_order_status]
+```
 
-- Connect to AgentCore Gateway for shared tools
-- Use AgentCore Memory for conversation history
-- Propagate JWT tokens for authentication
-- Handle errors gracefully
-- Return streaming responses
+Then redeploy with `terraform apply`.
+
+## Troubleshooting
+
+**No CloudWatch logs appearing:**
+
+- Check IAM role has `logs:CreateLogStream` and `logs:PutLogEvents`
+- Verify runtime actually started (check AgentCore console)
+
+**Import errors in container:**
+
+- Use `rebuild_vendored.sh` to ensure ARM64-compatible wheels
+- Check `requirements.txt` has correct pinned versions
+
+**Runtime fails to update:**
+
+- Use `terraform taint module.agentcore.aws_bedrockagentcore_agent_runtime.main`
+- Then `terraform apply` to force recreation
+
+**Region showing as None:**
+
+- Already fixed in main.py with fallback logic
+- Container will use AWS_REGION or AWS_DEFAULT_REGION env vars
