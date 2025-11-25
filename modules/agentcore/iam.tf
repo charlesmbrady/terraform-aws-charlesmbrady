@@ -178,13 +178,26 @@ data "aws_iam_policy_document" "agentcore_runtime_policy" {
   }
 
   # Allow AgentCore runtime to pull image from ECR for container-based runtime
+  # GetAuthorizationToken requires wildcard resource
   statement {
-    sid    = "RuntimeECRImageAccess"
+    sid    = "RuntimeECRTokenAccess"
     effect = "Allow"
     actions = [
       "ecr:GetAuthorizationToken",
+    ]
+    resources = [
+      "*",
+    ]
+  }
+
+  # Image pull operations scoped to specific repository
+  statement {
+    sid    = "RuntimeECRImageDataAccess"
+    effect = "Allow"
+    actions = [
       "ecr:BatchGetImage",
       "ecr:GetDownloadUrlForLayer",
+      "ecr:BatchCheckLayerAvailability",
     ]
     resources = [
       aws_ecr_repository.basic_agent.arn,
