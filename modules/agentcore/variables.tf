@@ -105,3 +105,24 @@ variable "rag_bucket_name" {
   default     = ""
 }
 
+###############################################################################
+#### Cognito Identity Configuration
+###############################################################################
+
+variable "cognito_user_pool_arn" {
+  type        = string
+  description = "The ARN of the Cognito User Pool for identity provider configuration"
+  default     = ""
+}
+
+variable "cognito_user_pool_id" {
+  type        = string
+  description = "The ID of the Cognito User Pool (extracted from ARN or provided separately)"
+  default     = ""
+}
+
+variable "cognito_client_ids" {
+  type        = list(string)
+  description = "List of Cognito client IDs allowed to authenticate with AgentCore"
+  default     = []
+}
