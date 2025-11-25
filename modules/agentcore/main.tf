@@ -8,7 +8,8 @@ locals {
   
   # Gateway requires hyphen-based naming: ^([0-9a-zA-Z][-]?){1,100}$
   gateway_name = "${var.project_name}-${var.agent_name}-${var.environment_tag}-gateway"
-  basic_agent_ecr_name = "${var.project_name}-${var.agent_name}-${var.environment_tag}-basic-agent"
+  # ECR repository name must be lowercase and match ECR naming rules
+  basic_agent_ecr_name = lower("${var.project_name}-${var.agent_name}-${var.environment_tag}-basic-agent")
 }
 
 ###############################################################################
@@ -122,52 +123,6 @@ resource "aws_s3_bucket_public_access_block" "rag_embeddings" {
   block_public_policy     = true
   ignore_public_acls      = true
   restrict_public_buckets = true
-}
-
-###############################################################################
-#### Runtime Code Artifacts Storage (S3)
-###############################################################################
-
-locals {
-  runtime_code_bucket_name = "${local.agentcore_bucket_base}-runtime-code"
-  runtime_code_key         = "agent-runtime/code.zip"
-}
-
-# S3 bucket for runtime code artifacts
-resource "aws_s3_bucket" "runtime_code" {
-  bucket        = local.runtime_code_bucket_name
-  force_destroy = true
-
-  tags = {
-    Name        = local.runtime_code_bucket_name
-    Purpose     = "AgentCore-Runtime-Code"
-    Environment = var.environment_tag
-  }
-}
-
-resource "aws_s3_bucket_public_access_block" "runtime_code" {
-  bucket                  = aws_s3_bucket.runtime_code.id
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
-# Upload pre-built runtime code zip (with vendored dependencies) to S3.
-# Build locally via:
-#   cd modules/agentcore/runtime_code
-#   chmod +x build_package.sh
-#   ./build_package.sh
-# which produces runtime_code/code.zip.
-resource "aws_s3_object" "runtime_code" {
-  bucket = aws_s3_bucket.runtime_code.id
-  key    = local.runtime_code_key
-  source = "${path.module}/runtime_code/code.zip"
-
-  tags = {
-    Name        = "agentcore-runtime-code"
-    Environment = var.environment_tag
-  }
 }
 
 resource "aws_ssm_parameter" "rag_bucket_name" {
