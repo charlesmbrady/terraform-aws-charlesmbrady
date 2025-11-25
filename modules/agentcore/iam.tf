@@ -177,6 +177,20 @@ data "aws_iam_policy_document" "agentcore_runtime_policy" {
     }
   }
 
+  # Allow AgentCore runtime to pull image from ECR for container-based runtime
+  statement {
+    sid    = "RuntimeECRImageAccess"
+    effect = "Allow"
+    actions = [
+      "ecr:GetAuthorizationToken",
+      "ecr:BatchGetImage",
+      "ecr:GetDownloadUrlForLayer",
+    ]
+    resources = [
+      aws_ecr_repository.basic_agent.arn,
+    ]
+  }
+
 }
 
 resource "aws_iam_policy" "agentcore_runtime" {
