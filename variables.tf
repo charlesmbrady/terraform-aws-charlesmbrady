@@ -286,3 +286,16 @@ variable "agentcore_rag_bucket_name" {
 }
 
 
+/* ------------------------ # Postman cognito client ------------------------ */
+variable "cognito_client_postman_callback_urls" {
+  type        = list(string)
+  description = "The callback urls for the postman cognito client"
+}
+variable "cognito_client_postman_default_redirect_uri" {
+  type        = string
+  description = "The default redirect uri for the postman cognito client"
+}
+variable "cognito_client_postman_logout_urls" {
+  type        = list(string)
+  description = "The logout urls for the postman cognito client"
+}
