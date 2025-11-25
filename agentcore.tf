@@ -30,12 +30,4 @@ module "agentcore" {
   # DIY RAG configuration
   rag_enabled     = var.agentcore_rag_enabled
   rag_bucket_name = var.agentcore_rag_bucket_name
-
-  # Cognito identity configuration
-  cognito_user_pool_arn = aws_cognito_user_pool.charlesmbrady.arn
-  cognito_user_pool_id  = aws_cognito_user_pool.charlesmbrady.id
-  cognito_client_ids    = [
-    aws_cognito_user_pool_client.mockdat.id,
-    aws_cognito_user_pool_client.apps.id,
-  ]
 }
