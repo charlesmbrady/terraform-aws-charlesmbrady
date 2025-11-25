@@ -149,6 +149,17 @@ data "aws_iam_policy_document" "agentcore_runtime_policy" {
     ]
   }
 
+  # Allow Bedrock model invocation for agent inference
+  statement {
+    sid    = "BedrockModelInvocation"
+    effect = "Allow"
+    actions = [
+      "bedrock:InvokeModel",
+      "bedrock:InvokeModelWithResponseStream"
+    ]
+    resources = ["*"]
+  }
+
   # Allow KMS encryption/decryption
   statement {
     sid    = "KMSAccess"
