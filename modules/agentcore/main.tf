@@ -296,48 +296,89 @@ resource "aws_codebuild_project" "basic_agent_image" {
               bedrock-agentcore
               EOF
 
-            # Step 1.2: Create my_agent.py (simplified basic version)
+            # Step 1.2: Create my_agent.py (enhanced version with proper input handling & debug logs)
             - |
               cat > my_agent.py << 'EOF'
+              import os, sys, traceback, json, time
               from strands import Agent
-              import os
               from bedrock_agentcore.runtime import BedrockAgentCoreApp
 
               app = BedrockAgentCoreApp()
 
-              def create_basic_agent() -> Agent:
-                  """Create a basic agent with simple functionality"""
-                  system_prompt = """You are a helpful assistant. Answer questions clearly and concisely."""
+              def _log(msg: str):
+                # Simple structured-ish logging; CloudWatch will capture stdout
+                print(json.dumps({"level": "DEBUG", "msg": msg, "ts": time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}))
+                sys.stdout.flush()
 
-                  return Agent(
-                      system_prompt=system_prompt,
-                      name="BasicAgent"
-                  )
+              SYSTEM_PROMPT = os.getenv("AGENT_INSTRUCTION", "You are a helpful assistant. Respond clearly and concisely.")
+
+              CAPABILITIES_TEXT = (
+                "I can help you with: \n"
+                "• Product technical specifications (laptops, smartphones, headphones, monitors)\n"
+                "• Return policy details by product category\n"
+                "Ask: 'product info <type>' or 'return policy <category>' to begin."
+              )
+
+              def create_basic_agent() -> Agent:
+                return Agent(system_prompt=SYSTEM_PROMPT, name="BasicAgent")
+
+              def handle_structured_query(query: str) -> str:
+                ql = query.lower().strip()
+                if ql.startswith("product info"):
+                  parts = ql.split()
+                  if len(parts) >= 3:
+                    product = parts[-1]
+                    return f"(stub) Product info for {product}: specs forthcoming."
+                  return "Please specify a product type, e.g. 'product info laptops'."
+                if ql.startswith("return policy"):
+                  parts = ql.split()
+                  if len(parts) >= 3:
+                    cat = parts[-1]
+                    return f"(stub) Return policy for {cat}: details forthcoming."
+                  return "Please specify a category, e.g. 'return policy smartphones'."
+                if "help" in ql or "what can" in ql:
+                  return CAPABILITIES_TEXT
+                return "General query received. Ask 'help' to see capabilities."
 
               @app.entrypoint
               async def invoke(payload=None):
-                  """Main entrypoint for the agent"""
-                  try:
-                      # Get the query from payload
-                      query = payload.get("prompt", "Hello, how are you?") if payload else "Hello, how are you?"
+                start = time.time()
+                try:
+                  _log(f"Raw payload: {payload}")
+                  query = ""
+                  if isinstance(payload, dict):
+                    query = (
+                      payload.get("input") or
+                      payload.get("prompt") or
+                      payload.get("inputText") or
+                      payload.get("text") or
+                      payload.get("message") or
+                      payload.get("query") or ""
+                    )
+                  elif isinstance(payload, str):
+                    query = payload
+                  query = query or "What can you help me with?"
+                  _log(f"Extracted query: {query}")
 
-                      # Create and use the agent
-                      agent = create_basic_agent()
-                      response = agent(query)
+                  # Lightweight intent routing before LLM
+                  routed = handle_structured_query(query)
+                  _log(f"Routed response (pre-LLM): {routed}")
 
-                      return {
-                          "status": "success",
-                          "response": response.message['content'][0]['text']
-                      }
+                  # LLM augmentation (optional); keep short to control cost
+                  agent = create_basic_agent()
+                  llm_response = agent(f"User asked: {query}\nContext hint: {routed}\nRespond helpfully.")
+                  text = llm_response.message['content'][0]['text']
+                  _log(f"LLM raw response: {text}")
 
-                  except Exception as e:
-                      return {
-                          "status": "error",
-                          "error": str(e)
-                      }
+                  elapsed = round(time.time() - start, 3)
+                  return {"status": "success", "response": text, "elapsed_sec": elapsed}
+                except Exception as e:
+                  _log(f"ERROR: {e}\n{traceback.format_exc()}")
+                  return {"status": "error", "error": str(e)}
 
               if __name__ == "__main__":
-                  app.run()
+                _log("Starting app server on port 8080")
+                app.run()
               EOF
 
             # Step 1.3: Create Dockerfile
