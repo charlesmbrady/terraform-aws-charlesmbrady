@@ -223,12 +223,30 @@ async def invoke(payload, context=None):
     """
     # Support both 'input' (Agent Sandbox) and 'prompt' (custom invocations)
     user_input = payload.get("input") or payload.get("prompt", "")
+    
+    # If still empty, check if the entire payload is just a string
+    if not user_input and isinstance(payload, str):
+        user_input = payload
+    
+    # Check for nested structures that AWS might send
+    if not user_input and isinstance(payload, dict):
+        # Try various possible payload structures
+        user_input = (
+            payload.get("inputText") or 
+            payload.get("text") or
+            payload.get("message") or
+            payload.get("query") or
+            ""
+        )
 
     # Access request headers (for future Gateway/Auth integration)
     request_headers = context.request_headers or {} if context else {}
     auth_header = request_headers.get("Authorization", "")
 
     # Log invocation (visible in CloudWatch)
+    print(f"[DEBUG] Full payload: {payload}")
+    print(f"[DEBUG] Payload type: {type(payload)}")
+    print(f"[DEBUG] Extracted user_input: '{user_input}'")
     print(f"Received prompt: {user_input}")
     print(f"Model: {MODEL_ID}")
     print(f"RAG Bucket: {RAG_BUCKET or 'Not configured'}")
@@ -245,7 +263,10 @@ async def invoke(payload, context=None):
             print("[invoke] Model unavailable; using fallback agent")
             agent = Agent()
             response = agent(user_input)
-            return response["message"]["content"][0]["text"]
+            return {
+                "status": "success",
+                "response": response["message"]["content"][0]["text"]
+            }
 
         # Create the agent with tools
         agent = Agent(
@@ -255,29 +276,50 @@ async def invoke(payload, context=None):
         )
 
         # Invoke the agent
+        print(f"[DEBUG] About to invoke agent with input: '{user_input}'")
+        print(f"[DEBUG] System prompt: '{SYSTEM_PROMPT}'")
         response = agent(user_input)
-        return response.message["content"][0]["text"]
+        print(f"[DEBUG] Agent response type: {type(response)}")
+        print(f"[DEBUG] Agent response: {response}")
+        response_text = response.message["content"][0]["text"]
+        print(f"[DEBUG] Extracted response text: '{response_text}'")
+        
+        # Return in format expected by AgentCore
+        return {
+            "status": "success",
+            "response": response_text
+        }
 
     except Exception as e:
         err_txt = str(e)
         print(f"Agent invocation error: {err_txt}")
+        print(f"[DEBUG] Full traceback:\n{traceback.format_exc()}")
         # Detect Anthropic model gating message and provide clearer guidance
         if "Model use case details" in err_txt and "Anthropic" in err_txt:
-            return (
-                "Anthropic model access not yet enabled for this account. "
-                "Submit the Anthropic model use case form in the AWS Bedrock console (Model access) "
-                "or switch FOUNDATION_MODEL to an approved model (e.g., amazon.titan-text-premier-v1:0)."
-            )
+            return {
+                "status": "error",
+                "response": (
+                    "Anthropic model access not yet enabled for this account. "
+                    "Submit the Anthropic model use case form in the AWS Bedrock console (Model access) "
+                    "or switch FOUNDATION_MODEL to an approved model (e.g., amazon.titan-text-premier-v1:0)."
+                )
+            }
         if (
             "aws-marketplace:ViewSubscriptions" in err_txt
             or "aws-marketplace:Subscribe" in err_txt
         ):
-            return (
-                "AWS Marketplace permissions missing for Anthropic model access. "
-                "The IAM role needs aws-marketplace:ViewSubscriptions and aws-marketplace:Subscribe. "
-                "Terraform update in progress—wait 10 minutes after terraform apply completes, then retry."
-            )
-        return f"Error processing request: {err_txt}"
+            return {
+                "status": "error",
+                "response": (
+                    "AWS Marketplace permissions missing for Anthropic model access. "
+                    "The IAM role needs aws-marketplace:ViewSubscriptions and aws-marketplace:Subscribe. "
+                    "Terraform update in progress—wait 10 minutes after terraform apply completes, then retry."
+                )
+            }
+        return {
+            "status": "error",
+            "response": f"Error processing request: {err_txt}"
+        }
 
 
 if __name__ == "__main__":
