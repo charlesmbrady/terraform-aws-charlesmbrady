@@ -177,21 +177,6 @@ data "aws_iam_policy_document" "agentcore_runtime_policy" {
     }
   }
 
-  # Allow access to runtime code artifact bucket objects (read-only)
-  statement {
-    sid    = "RuntimeCodeS3Access"
-    effect = "Allow"
-    actions = [
-      "s3:GetObject",
-      "s3:GetObjectVersion",
-      "s3:GetBucketLocation",
-      "s3:ListBucket"
-    ]
-    resources = [
-      aws_s3_bucket.runtime_code.arn,
-      "${aws_s3_bucket.runtime_code.arn}/*"
-    ]
-  }
 }
 
 resource "aws_iam_policy" "agentcore_runtime" {

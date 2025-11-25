@@ -72,25 +72,6 @@ output "rag_bucket_name_ssm_parameter" {
   value       = var.rag_enabled ? aws_ssm_parameter.rag_bucket_name[0].name : null
 }
 
-###############################################################################
-#### Runtime Code Outputs
-###############################################################################
-
-output "runtime_code_bucket_name" {
-  description = "Name of the S3 bucket storing runtime code artifacts"
-  value       = aws_s3_bucket.runtime_code.bucket
-}
-
-output "runtime_code_s3_key" {
-  description = "S3 key of the uploaded runtime code package"
-  value       = aws_s3_object.runtime_code.key
-}
-
-output "runtime_code_version" {
-  description = "Version (ETag) of the runtime code package"
-  value       = aws_s3_object.runtime_code.etag
-}
-
 #### CloudWatch Outputs (No manual log group)
 ###############################################################################
 
