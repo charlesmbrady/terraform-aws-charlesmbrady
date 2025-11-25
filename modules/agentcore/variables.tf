@@ -104,4 +104,3 @@ variable "rag_bucket_name" {
   description = "Optional override for the S3 bucket name used to store embeddings JSON. If empty, a name will be derived."
   default     = ""
 }
-
