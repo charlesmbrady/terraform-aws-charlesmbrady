@@ -8,6 +8,7 @@ locals {
   
   # Gateway requires hyphen-based naming: ^([0-9a-zA-Z][-]?){1,100}$
   gateway_name = "${var.project_name}-${var.agent_name}-${var.environment_tag}-gateway"
+  basic_agent_ecr_name = "${var.project_name}-${var.agent_name}-${var.environment_tag}-basic-agent"
 }
 
 ###############################################################################
@@ -19,21 +20,10 @@ resource "aws_bedrockagentcore_agent_runtime" "main" {
   role_arn           = aws_iam_role.agentcore_runtime.arn
   description        = var.agent_description
 
-  depends_on = [aws_s3_object.runtime_code]
-
-  # Required artifact configuration - points to managed S3 code package
+  # Container-based artifact configuration - uses ARM64 image built by CodeBuild
   agent_runtime_artifact {
-    code_configuration {
-      # Production runtime with full strands tooling
-      entry_point = ["main.py"]
-      # Use currently supported Bedrock AgentCore Python runtime version
-      runtime     = "PYTHON_3_12"
-      code {
-        s3 {
-          bucket = aws_s3_bucket.runtime_code.id
-          prefix = local.runtime_code_key
-        }
-      }
+    container_configuration {
+      container_uri = "${aws_ecr_repository.basic_agent.repository_url}:latest"
     }
   }
 
@@ -163,23 +153,16 @@ resource "aws_s3_bucket_public_access_block" "runtime_code" {
   restrict_public_buckets = true
 }
 
-# Package runtime code into zip archive
-# NOTE: This uses source_dir which does NOT install Python dependencies.
-# For production, run: modules/agentcore/runtime_code/build_package.sh
-# to create a zip with vendored dependencies, then point to that zip.
-data "archive_file" "runtime_code" {
-  type        = "zip"
-  source_dir  = "${path.module}/runtime_code"
-  output_path = "${path.module}/.terraform/runtime_code.zip"
-  excludes    = ["package.sh", "build_package.sh", "deploy_full.sh", "deploy_full_fixed.sh", "force_recreate.sh", "README.md", ".DS_Store", "build/", "*.zip", "main_minimal.py", "main_simple.py", "main_basic_agent.py", "requirements_minimal.txt"]
-}
-
-# Upload runtime code to S3
+# Upload pre-built runtime code zip (with vendored dependencies) to S3.
+# Build locally via:
+#   cd modules/agentcore/runtime_code
+#   chmod +x build_package.sh
+#   ./build_package.sh
+# which produces runtime_code/code.zip.
 resource "aws_s3_object" "runtime_code" {
   bucket = aws_s3_bucket.runtime_code.id
   key    = local.runtime_code_key
-  source = data.archive_file.runtime_code.output_path
-  etag   = data.archive_file.runtime_code.output_md5
+  source = "${path.module}/runtime_code/code.zip"
 
   tags = {
     Name        = "agentcore-runtime-code"
@@ -217,4 +200,234 @@ resource "aws_ssm_parameter" "rag_bucket_name" {
 ## a mismatched path (e.g. /aws/bedrock/agentcore/...) leads to confusion when
 ## logs appear empty. Retaining no manual log group ensures correct automatic
 ## log stream generation.
+
+###############################################################################
+#### Basic Agent ECR Repository (for container-based runtime)
+###############################################################################
+
+resource "aws_ecr_repository" "basic_agent" {
+  name                 = local.basic_agent_ecr_name
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
+  tags = {
+    Name        = "${local.basic_agent_ecr_name}-repository"
+    Environment = var.environment_tag
+    Module      = "ECR"
+  }
+}
+
+###############################################################################
+#### CodeBuild Project - Build ARM64 Basic Agent Image
+###############################################################################
+
+data "aws_region" "current" {}
+data "aws_caller_identity" "current" {}
+
+resource "aws_iam_role" "codebuild_role" {
+  name = "${var.project_name}-${var.agent_name}-${var.environment_tag}-codebuild-role"
+
+  assume_role_policy = jsonencode({
+    Version   = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "codebuild.amazonaws.com" }
+      Action    = "sts:AssumeRole"
+    }]
+  })
+
+  inline_policy {
+    name = "CodeBuildPolicy"
+    policy = jsonencode({
+      Version   = "2012-10-17"
+      Statement = [
+        {
+          Sid    = "CloudWatchLogs"
+          Effect = "Allow"
+          Action = [
+            "logs:CreateLogGroup",
+            "logs:CreateLogStream",
+            "logs:PutLogEvents",
+          ]
+          Resource = "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/codebuild/*"
+        },
+        {
+          Sid    = "ECRAccess"
+          Effect = "Allow"
+          Action = [
+            "ecr:BatchCheckLayerAvailability",
+            "ecr:GetDownloadUrlForLayer",
+            "ecr:BatchGetImage",
+            "ecr:GetAuthorizationToken",
+            "ecr:PutImage",
+            "ecr:InitiateLayerUpload",
+            "ecr:UploadLayerPart",
+            "ecr:CompleteLayerUpload",
+          ]
+          Resource = [
+            aws_ecr_repository.basic_agent.arn,
+            "*",
+          ]
+        },
+      ]
+    })
+  }
+
+  tags = {
+    Name        = "${var.project_name}-${var.agent_name}-${var.environment_tag}-codebuild-role"
+    Environment = var.environment_tag
+    Module      = "IAM"
+  }
+}
+
+resource "aws_codebuild_project" "basic_agent_image" {
+  name        = "${var.project_name}-${var.agent_name}-${var.environment_tag}-basic-agent-build"
+  description = "Build basic agent Docker image for ${var.project_name}-${var.agent_name}-${var.environment_tag}"
+  service_role = aws_iam_role.codebuild_role.arn
+
+  artifacts {
+    type = "NO_ARTIFACTS"
+  }
+
+  environment {
+    type            = "ARM_CONTAINER"
+    compute_type    = "BUILD_GENERAL1_LARGE"
+    image           = "aws/codebuild/amazonlinux2-aarch64-standard:3.0"
+    privileged_mode = true
+
+    environment_variable {
+      name  = "AWS_DEFAULT_REGION"
+      value = data.aws_region.current.name
+    }
+
+    environment_variable {
+      name  = "AWS_ACCOUNT_ID"
+      value = data.aws_caller_identity.current.account_id
+    }
+
+    environment_variable {
+      name  = "IMAGE_REPO_NAME"
+      value = aws_ecr_repository.basic_agent.name
+    }
+
+    environment_variable {
+      name  = "IMAGE_TAG"
+      value = "latest"
+    }
+  }
+
+  source {
+    type      = "NO_SOURCE"
+    buildspec = <<-EOT
+      version: 0.2
+      phases:
+        pre_build:
+          commands:
+            - echo Logging in to Amazon ECR...
+            - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+        build:
+          commands:
+            - echo Build started on `date`
+            - echo Building the Docker image for basic agent ARM64...
+
+            # Step 1.1: Create requirements.txt
+            - |
+              cat > requirements.txt << 'EOF'
+              strands-agents
+              boto3
+              bedrock-agentcore
+              EOF
+
+            # Step 1.2: Create my_agent.py (simplified basic version)
+            - |
+              cat > my_agent.py << 'EOF'
+              from strands import Agent
+              import os
+              from bedrock_agentcore.runtime import BedrockAgentCoreApp
+
+              app = BedrockAgentCoreApp()
+
+              def create_basic_agent() -> Agent:
+                  """Create a basic agent with simple functionality"""
+                  system_prompt = """You are a helpful assistant. Answer questions clearly and concisely."""
+
+                  return Agent(
+                      system_prompt=system_prompt,
+                      name="BasicAgent"
+                  )
+
+              @app.entrypoint
+              async def invoke(payload=None):
+                  """Main entrypoint for the agent"""
+                  try:
+                      # Get the query from payload
+                      query = payload.get("prompt", "Hello, how are you?") if payload else "Hello, how are you?"
+
+                      # Create and use the agent
+                      agent = create_basic_agent()
+                      response = agent(query)
+
+                      return {
+                          "status": "success",
+                          "response": response.message['content'][0]['text']
+                      }
+
+                  except Exception as e:
+                      return {
+                          "status": "error",
+                          "error": str(e)
+                      }
+
+              if __name__ == "__main__":
+                  app.run()
+              EOF
+
+            # Step 1.3: Create Dockerfile
+            - |
+              cat > Dockerfile << 'EOF'
+              FROM public.ecr.aws/docker/library/python:3.11-slim
+              WORKDIR /app
+
+              COPY requirements.txt requirements.txt
+              RUN pip install --no-cache-dir -r requirements.txt && \
+                  pip install --no-cache-dir aws-opentelemetry-distro>=0.10.1
+
+              ENV AWS_REGION=$AWS_DEFAULT_REGION
+              ENV AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION
+
+              # Create non-root user
+              RUN useradd -m -u 1000 bedrock_agentcore
+              USER bedrock_agentcore
+
+              EXPOSE 8080
+              EXPOSE 8000
+
+              COPY . .
+
+              CMD ["opentelemetry-instrument", "python", "-m", "my_agent"]
+              EOF
+
+            # Step 1.4: Build the image
+            - echo Building ARM64 image...
+            - docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG .
+            - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
+
+        post_build:
+          commands:
+            - echo Build completed on `date`
+            - echo Pushing the Docker image...
+            - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
+            - echo ARM64 Docker image pushed successfully
+      EOT
+  }
+
+  tags = {
+    Name        = "${var.project_name}-${var.agent_name}-${var.environment_tag}-basic-build"
+    Environment = var.environment_tag
+    Module      = "CodeBuild"
+  }
+}
 
