@@ -45,10 +45,15 @@
       "Effect": "Allow",
       "Action": [
         "bedrock-agentcore:InvokeAgentRuntime",
-        "bedrock-agentcore:GetAgentRuntime"
+        "bedrock-agentcore:GetAgentRuntime",
+        "bedrock-agentcore:GetWorkloadAccessToken",
+        "bedrock-agentcore:GetWorkloadAccessTokenForJWT",
+        "bedrock-agentcore:GetWorkloadAccessTokenForUserId"
       ],
       "Resource": [
-        "arn:aws:bedrock-agentcore:${region}:${account_id}:runtime/*"
+        "arn:aws:bedrock-agentcore:${region}:${account_id}:runtime/*",
+        "arn:aws:bedrock-agentcore:${region}:${account_id}:workload-identity-directory/default",
+        "arn:aws:bedrock-agentcore:${region}:${account_id}:workload-identity-directory/default/workload-identity/*"
       ]
     },
     {
