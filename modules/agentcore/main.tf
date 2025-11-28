@@ -39,6 +39,8 @@ resource "aws_bedrockagentcore_agent_runtime" "main" {
     FOUNDATION_MODEL  = var.foundation_model
     RAG_BUCKET        = var.rag_enabled ? local.rag_bucket_effective_name : ""
     MEMORY_ID         = var.enable_memory ? aws_bedrockagentcore_memory.main[0].id : ""
+    # Explicitly pass region to runtime to avoid cross-region defaults
+    AGENTCORE_REGION  = var.region
   }
 
   tags = {
@@ -340,9 +342,8 @@ resource "aws_codebuild_project" "basic_agent_image" {
                   print(f"[startup-error] Import failure: {import_err}")
                   traceback.print_exc()
 
-              # Get AWS region
-              _session_region = boto3.session.Session().region_name
-              REGION = _session_region or os.environ.get("AWS_REGION") or os.environ.get("AWS_DEFAULT_REGION") or "us-east-1"
+              # Pin region deterministically via env provided by Terraform
+              REGION = os.environ.get("AGENTCORE_REGION", "us-east-1")
 
               # Read configuration from environment
               MODEL_ID = os.environ.get("FOUNDATION_MODEL", "anthropic.claude-3-5-sonnet-20240620-v1:0")
@@ -451,10 +452,10 @@ resource "aws_codebuild_project" "basic_agent_image" {
 
                       # Initialize memory if configured
                       memory_hook = None
-                      if MEMORY_ID:
+                        if MEMORY_ID:
                           try:
-                              print(f"[invoke] Initializing memory with ID={MEMORY_ID}")
-                              memory_client = MemoryClient()
+                            print(f"[invoke] Initializing memory with ID={MEMORY_ID} in region {REGION}")
+                            memory_client = MemoryClient(region_name=REGION)
                               memory_hook = MemoryHook(
                                   memory_client=memory_client,
                                   memory_id=MEMORY_ID,
