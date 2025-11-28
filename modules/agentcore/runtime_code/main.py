@@ -397,7 +397,15 @@ def get_technical_expertise(area: str) -> str:
         available = ", ".join(expertise.keys())
         return f"I can discuss expertise in: {available}. Which area interests you?"
 
-    details_key = "services" if "services" in info else "capabilities" if "capabilities" in info else "areas" if "areas" in info else "technologies"
+    details_key = (
+        "services"
+        if "services" in info
+        else (
+            "capabilities"
+            if "capabilities" in info
+            else "areas" if "areas" in info else "technologies"
+        )
+    )
     details_list = "\n  - ".join(info.get(details_key, []))
 
     return f"""**{area.upper()} Expertise**
@@ -430,24 +438,42 @@ async def invoke(payload, context=None):
     Returns:
         Agent response with session tracking
     """
-    # Extract user input - support multiple payload formats
-    user_input = payload.get("input") or payload.get("prompt", "")
-    
-    if not user_input and isinstance(payload, str):
+    print(f"[invoke] Raw payload type: {type(payload)}")
+    print(f"[invoke] Raw payload: {payload}")
+    print(f"[invoke] Context: {context}")
+
+    # Handle different payload formats (AWS Console vs Lambda invocation)
+    user_input = ""
+    session_id = "default-session"
+    actor_id = "anonymous"
+
+    # If payload is a string, use it directly as input
+    if isinstance(payload, str):
         user_input = payload
-    
-    if not user_input and isinstance(payload, dict):
+    # If payload is a dict, extract fields
+    elif isinstance(payload, dict):
         user_input = (
-            payload.get("inputText") or 
-            payload.get("text") or
-            payload.get("message") or
-            payload.get("query") or
-            ""
+            payload.get("input")
+            or payload.get("prompt")
+            or payload.get("inputText")
+            or payload.get("text")
+            or payload.get("message")
+            or payload.get("query")
+            or ""
+        )
+        session_id = (
+            payload.get("sessionId") or payload.get("session_id") or "default-session"
+        )
+        actor_id = (
+            payload.get("actorId")
+            or payload.get("actor_id")
+            or payload.get("userId")
+            or "anonymous"
         )
 
-    # Extract session context for memory
-    session_id = payload.get("sessionId", "default-session")
-    actor_id = payload.get("actorId", "anonymous")
+    # If still no input, default to help message
+    if not user_input:
+        user_input = "Hello! What can you help me with?"
 
     # Access request headers
     request_headers = context.request_headers or {} if context else {}
@@ -500,7 +526,7 @@ async def invoke(payload, context=None):
             "tools": tools,
             "system_prompt": SYSTEM_PROMPT,
         }
-        
+
         if memory_hook:
             agent_kwargs["hooks"] = [memory_hook]
             print("[invoke] Agent created with memory hooks")
@@ -514,7 +540,7 @@ async def invoke(payload, context=None):
         response = agent(user_input)
         response_text = response.message["content"][0]["text"]
         print(f"[invoke] Response generated: {response_text[:100]}...")
-        
+
         return {
             "status": "success",
             "response": response_text,
@@ -527,7 +553,7 @@ async def invoke(payload, context=None):
         err_txt = str(e)
         print(f"[invoke] ERROR: {err_txt}")
         print(f"[invoke] Traceback:\n{traceback.format_exc()}")
-        
+
         # Provide helpful error messages
         if "Model use case details" in err_txt and "Anthropic" in err_txt:
             return {
@@ -539,7 +565,7 @@ async def invoke(payload, context=None):
                 "sessionId": session_id,
                 "actorId": actor_id,
             }
-        
+
         if "aws-marketplace" in err_txt.lower():
             return {
                 "status": "error",
@@ -550,7 +576,7 @@ async def invoke(payload, context=None):
                 "sessionId": session_id,
                 "actorId": actor_id,
             }
-        
+
         return {
             "status": "error",
             "response": f"Error: {err_txt}",
