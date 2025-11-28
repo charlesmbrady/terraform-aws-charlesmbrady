@@ -408,12 +408,35 @@ resource "aws_codebuild_project" "basic_agent_image" {
               @app.entrypoint
               async def invoke(payload, context=None):
                   """AgentCore entrypoint with memory support"""
-                  # Extract input and session context
-                  user_input = payload.get("input") or payload.get("prompt", "")
-                  if not user_input and isinstance(payload, str):
+                  print(f"[invoke] Raw payload type: {type(payload)}")
+                  print(f"[invoke] Raw payload: {payload}")
+                  print(f"[invoke] Context: {context}")
+                  
+                  # Handle different payload formats (AWS Console vs Lambda)
+                  user_input = ""
+                  session_id = "default-session"
+                  actor_id = "anonymous"
+                  
+                  # String payload
+                  if isinstance(payload, str):
                       user_input = payload
-                  if not user_input and isinstance(payload, dict):
-                      user_input = payload.get("inputText") or payload.get("text") or payload.get("message") or payload.get("query") or ""
+                  # Dict payload
+                  elif isinstance(payload, dict):
+                      user_input = (
+                          payload.get("input") or 
+                          payload.get("prompt") or
+                          payload.get("inputText") or 
+                          payload.get("text") or
+                          payload.get("message") or
+                          payload.get("query") or
+                          ""
+                      )
+                      session_id = payload.get("sessionId") or payload.get("session_id") or "default-session"
+                      actor_id = payload.get("actorId") or payload.get("actor_id") or payload.get("userId") or "anonymous"
+                  
+                  # Default input if empty
+                  if not user_input:
+                      user_input = "Hello! What can you help me with?"
 
                   session_id = payload.get("sessionId", "default-session")
                   actor_id = payload.get("actorId", "anonymous")

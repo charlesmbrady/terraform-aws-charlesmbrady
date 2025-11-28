@@ -93,6 +93,26 @@ data "aws_iam_policy_document" "agentcore_runtime_policy" {
     ]
   }
 
+  # Allow AgentCore Memory API access (if memory is enabled)
+  dynamic "statement" {
+    for_each = var.enable_memory ? [1] : []
+    content {
+      sid    = "AgentCoreMemoryAPI"
+      effect = "Allow"
+      actions = [
+        "bedrock-agentcore:ListEvents",
+        "bedrock-agentcore:CreateEvent",
+        "bedrock-agentcore:GetEvent",
+        "bedrock-agentcore:DeleteEvent",
+        "bedrock-agentcore:UpdateEvent"
+      ]
+      resources = [
+        aws_bedrockagentcore_memory.main[0].arn,
+        "${aws_bedrockagentcore_memory.main[0].arn}/*"
+      ]
+    }
+  }
+
   # Allow CloudWatch Logs for AgentCore runtimes (path from workshop)
   statement {
     sid    = "CloudWatchLogs"
