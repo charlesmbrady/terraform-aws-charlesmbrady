@@ -107,8 +107,7 @@ data "aws_iam_policy_document" "agentcore_runtime_policy" {
         "bedrock-agentcore:UpdateEvent"
       ]
       resources = [
-        aws_bedrockagentcore_memory.main[0].arn,
-        "${aws_bedrockagentcore_memory.main[0].arn}/*"
+        "arn:aws:bedrock-agentcore:${var.region}:${var.account_id}:memory/*"
       ]
     }
   }
