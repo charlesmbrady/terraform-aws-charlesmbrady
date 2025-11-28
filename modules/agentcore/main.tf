@@ -531,21 +531,53 @@ resource "aws_codebuild_project" "basic_agent_image" {
                           if not recent_turns:
                               print("[MemoryHook] No previous history")
                               return
+                          
                           context_messages = []
                           for turn in recent_turns:
-                              for message in turn["messages"]:
-                                  role = "assistant" if message["role"] == "assistant" else "user"
-                                  content = message["content"]["text"]
-                                  context_messages.append({"role": role, "content": [{"text": content}]})
+                              # Handle different turn shapes from Memory API
+                              if isinstance(turn, dict) and "messages" in turn and isinstance(turn["messages"], list):
+                                  messages_list = turn["messages"]
+                              elif isinstance(turn, list):
+                                  messages_list = turn
+                              else:
+                                  print(f"[MemoryHook] Unexpected turn shape: {type(turn)}")
+                                  continue
+                              
+                              for message in messages_list:
+                                  if not isinstance(message, dict):
+                                      continue
+                                  msg_role = message.get("role") or message.get("type") or "user"
+                                  
+                                  # Extract content text from various formats
+                                  content_text = None
+                                  if isinstance(message.get("content"), dict):
+                                      content_text = message["content"].get("text")
+                                  elif isinstance(message.get("content"), list) and message["content"]:
+                                      first = message["content"][0]
+                                      if isinstance(first, dict):
+                                          content_text = first.get("text")
+                                  elif isinstance(message.get("text"), str):
+                                      content_text = message.get("text")
+                                  
+                                  if not content_text:
+                                      continue
+                                  
+                                  role = "assistant" if msg_role == "assistant" else "user"
+                                  context_messages.append({"role": role, "content": [{"text": content_text}]})
+                          
                           print(f"[MemoryHook] Loaded {len(context_messages)} messages")
                           event.agent.messages = context_messages
                       except Exception as e:
                           print(f"[MemoryHook] Load error: {e}")
+                          import traceback
+                          traceback.print_exc()
 
                   def on_message_added(self, event: MessageAddedEvent):
                       messages = copy.deepcopy(event.agent.messages)
                       try:
                           if messages[-1]["role"] not in ["user", "assistant"]:
+                              return
+                          if not messages[-1].get("content") or not isinstance(messages[-1]["content"], list) or not messages[-1]["content"]:
                               return
                           if "text" not in messages[-1]["content"][0]:
                               return
@@ -558,8 +590,11 @@ resource "aws_codebuild_project" "basic_agent_image" {
                               session_id=self.session_id,
                               messages=[(message_text, message_role)]
                           )
+                          print("[MemoryHook] Message saved successfully")
                       except Exception as e:
                           print(f"[MemoryHook] Save error: {e}")
+                          import traceback
+                          traceback.print_exc()
 
                   def register_hooks(self, registry: HookRegistry):
                       registry.add_callback(MessageAddedEvent, self.on_message_added)
