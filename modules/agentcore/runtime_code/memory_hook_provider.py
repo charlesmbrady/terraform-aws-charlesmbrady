@@ -34,8 +34,10 @@ class MemoryHook(HookProvider):
     def on_agent_initialized(self, event: AgentInitializedEvent):
         """Load recent conversation history when agent starts"""
         try:
-            print(f"[MemoryHook] Loading conversation history for session {self.session_id}")
-            
+            print(
+                f"[MemoryHook] Loading conversation history for session {self.session_id}"
+            )
+
             # Load the last 5 conversation turns from memory
             recent_turns = self.memory_client.get_last_k_turns(
                 memory_id=self.memory_id,
@@ -51,11 +53,44 @@ class MemoryHook(HookProvider):
             # Convert memory format to agent message format
             context_messages = []
             for turn in recent_turns:
-                for message in turn["messages"]:
-                    role = "assistant" if message["role"] == "assistant" else "user"
-                    content = message["content"]["text"]
+                # Support different payload shapes from Memory API
+                # Case A: turn is a dict with key "messages" (list of dicts)
+                if (
+                    isinstance(turn, dict)
+                    and "messages" in turn
+                    and isinstance(turn["messages"], list)
+                ):
+                    messages_list = turn["messages"]
+                # Case B: turn itself is a list of message dicts
+                elif isinstance(turn, list):
+                    messages_list = turn
+                else:
+                    print(f"[MemoryHook] Unexpected turn shape: {type(turn)} - {turn}")
+                    continue
+
+                for message in messages_list:
+                    if not isinstance(message, dict):
+                        continue
+                    msg_role = message.get("role") or message.get("type") or "user"
+                    # Content may be nested { content: { text: ... } } or { content: [ { text: ... } ] }
+                    content_text = None
+                    if isinstance(message.get("content"), dict):
+                        content_text = message["content"].get("text")
+                    elif (
+                        isinstance(message.get("content"), list) and message["content"]
+                    ):
+                        first = message["content"][0]
+                        if isinstance(first, dict):
+                            content_text = first.get("text")
+                    elif isinstance(message.get("text"), str):
+                        content_text = message.get("text")
+
+                    if not content_text:
+                        continue
+
+                    role = "assistant" if msg_role == "assistant" else "user"
                     context_messages.append(
-                        {"role": role, "content": [{"text": content}]}
+                        {"role": role, "content": [{"text": content_text}]}
                     )
 
             # Add context to agent's message history
@@ -86,6 +121,12 @@ You have access to our conversation history. Use this context to:
                 return
 
             # Ensure message has text content
+            if (
+                not messages[-1].get("content")
+                or not isinstance(messages[-1]["content"], list)
+                or not messages[-1]["content"]
+            ):
+                return
             if "text" not in messages[-1]["content"][0]:
                 return
 
@@ -101,9 +142,7 @@ You have access to our conversation history. Use this context to:
                 memory_id=self.memory_id,
                 actor_id=self.actor_id,
                 session_id=self.session_id,
-                messages=[
-                    (message_text, message_role)
-                ],
+                messages=[(message_text, message_role)],
             )
 
             print("[MemoryHook] Message saved successfully")
