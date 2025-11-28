@@ -34,8 +34,10 @@ class MemoryHook(HookProvider):
     def on_agent_initialized(self, event: AgentInitializedEvent):
         """Load recent conversation history when agent starts"""
         try:
-            print(f"[MemoryHook] Loading conversation history for session {self.session_id}")
-            
+            print(
+                f"[MemoryHook] Loading conversation history for session {self.session_id}"
+            )
+
             # Load the last 5 conversation turns from memory
             recent_turns = self.memory_client.get_last_k_turns(
                 memory_id=self.memory_id,
@@ -101,9 +103,7 @@ You have access to our conversation history. Use this context to:
                 memory_id=self.memory_id,
                 actor_id=self.actor_id,
                 session_id=self.session_id,
-                messages=[
-                    (message_text, message_role)
-                ],
+                messages=[(message_text, message_role)],
             )
 
             print("[MemoryHook] Message saved successfully")

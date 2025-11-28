@@ -397,7 +397,15 @@ def get_technical_expertise(area: str) -> str:
         available = ", ".join(expertise.keys())
         return f"I can discuss expertise in: {available}. Which area interests you?"
 
-    details_key = "services" if "services" in info else "capabilities" if "capabilities" in info else "areas" if "areas" in info else "technologies"
+    details_key = (
+        "services"
+        if "services" in info
+        else (
+            "capabilities"
+            if "capabilities" in info
+            else "areas" if "areas" in info else "technologies"
+        )
+    )
     details_list = "\n  - ".join(info.get(details_key, []))
 
     return f"""**{area.upper()} Expertise**
@@ -432,17 +440,17 @@ async def invoke(payload, context=None):
     """
     # Extract user input - support multiple payload formats
     user_input = payload.get("input") or payload.get("prompt", "")
-    
+
     if not user_input and isinstance(payload, str):
         user_input = payload
-    
+
     if not user_input and isinstance(payload, dict):
         user_input = (
-            payload.get("inputText") or 
-            payload.get("text") or
-            payload.get("message") or
-            payload.get("query") or
-            ""
+            payload.get("inputText")
+            or payload.get("text")
+            or payload.get("message")
+            or payload.get("query")
+            or ""
         )
 
     # Extract session context for memory
@@ -500,7 +508,7 @@ async def invoke(payload, context=None):
             "tools": tools,
             "system_prompt": SYSTEM_PROMPT,
         }
-        
+
         if memory_hook:
             agent_kwargs["hooks"] = [memory_hook]
             print("[invoke] Agent created with memory hooks")
@@ -514,7 +522,7 @@ async def invoke(payload, context=None):
         response = agent(user_input)
         response_text = response.message["content"][0]["text"]
         print(f"[invoke] Response generated: {response_text[:100]}...")
-        
+
         return {
             "status": "success",
             "response": response_text,
@@ -527,7 +535,7 @@ async def invoke(payload, context=None):
         err_txt = str(e)
         print(f"[invoke] ERROR: {err_txt}")
         print(f"[invoke] Traceback:\n{traceback.format_exc()}")
-        
+
         # Provide helpful error messages
         if "Model use case details" in err_txt and "Anthropic" in err_txt:
             return {
@@ -539,7 +547,7 @@ async def invoke(payload, context=None):
                 "sessionId": session_id,
                 "actorId": actor_id,
             }
-        
+
         if "aws-marketplace" in err_txt.lower():
             return {
                 "status": "error",
@@ -550,7 +558,7 @@ async def invoke(payload, context=None):
                 "sessionId": session_id,
                 "actorId": actor_id,
             }
-        
+
         return {
             "status": "error",
             "response": f"Error: {err_txt}",
