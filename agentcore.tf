@@ -24,10 +24,12 @@ module "agentcore" {
   agent_name            = var.agentcore_agent_name
   agent_instruction     = var.agentcore_agent_instruction
   agent_description     = var.agentcore_agent_description
-  foundation_model      = var.agentcore_foundation_model
+  # Switch to a faster model to reduce latency
+  foundation_model      = "anthropic.claude-3-haiku-20240307-v1:0"
   enable_memory         = var.agentcore_enable_memory
   memory_retention_days = var.agentcore_memory_retention_days
   # DIY RAG configuration
-  rag_enabled     = var.agentcore_rag_enabled
-  rag_bucket_name = var.agentcore_rag_bucket_name
+  # Fully disable DIY RAG for now
+  rag_enabled     = false
+  rag_bucket_name = ""
 }

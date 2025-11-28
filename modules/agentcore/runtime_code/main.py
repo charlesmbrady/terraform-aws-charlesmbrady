@@ -52,16 +52,9 @@ except Exception as import_err:
         return fn
 
 
-# Get AWS region from session (fallback to environment or us-east-1 to avoid None)
-_session_region = boto3.session.Session().region_name
-REGION = (
-    _session_region
-    or os.environ.get("AWS_REGION")
-    or os.environ.get("AWS_DEFAULT_REGION")
-    or "us-east-1"
-)
-if _session_region is None:
-    print(f"[startup] Session region was None; using fallback REGION={REGION}")
+# Pin region deterministically via env provided by Terraform
+REGION = os.environ.get("AGENTCORE_REGION", "us-east-1")
+print(f"[startup] Using REGION={REGION} for AgentCore runtime")
 
 # Read configuration from environment variables (set by Terraform)
 MODEL_ID = os.environ.get(
