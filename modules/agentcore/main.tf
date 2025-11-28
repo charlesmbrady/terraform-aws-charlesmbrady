@@ -445,49 +445,59 @@ resource "aws_codebuild_project" "basic_agent_image" {
                   print(f"[invoke] Session: {session_id}, Actor: {actor_id}, Input: {user_input[:100]}...")
 
                   try:
-                      tools = [get_project_details, get_technical_expertise]
+                    tools = [get_project_details, get_technical_expertise]
 
-                      if model is None:
-                          return {"status": "error", "response": "Model not initialized", "sessionId": session_id}
-
-                      # Initialize memory if configured
-                      memory_hook = None
-                        if MEMORY_ID:
-                          try:
-                            print(f"[invoke] Initializing memory with ID={MEMORY_ID} in region {REGION}")
-                            memory_client = MemoryClient(region_name=REGION)
-                              memory_hook = MemoryHook(
-                                  memory_client=memory_client,
-                                  memory_id=MEMORY_ID,
-                                  actor_id=actor_id,
-                                  session_id=session_id,
-                              )
-                              print("[invoke] Memory hook initialized")
-                          except Exception as mem_err:
-                              print(f"[invoke] Memory init failed: {mem_err}")
-
-                      # Create agent
-                      agent_kwargs = {"model": model, "tools": tools, "system_prompt": SYSTEM_PROMPT}
-                      if memory_hook:
-                          agent_kwargs["hooks"] = [memory_hook]
-                      agent = Agent(**agent_kwargs)
-
-                      # Invoke
-                      response = agent(user_input)
-                      response_text = response.message["content"][0]["text"]
-                      
+                    if model is None:
                       return {
-                          "status": "success",
-                          "response": response_text,
-                          "sessionId": session_id,
-                          "actorId": actor_id,
-                          "memoryEnabled": bool(memory_hook)
+                        "status": "error",
+                        "response": "Model not initialized",
+                        "sessionId": session_id,
                       }
 
+                    # Initialize memory if configured
+                    memory_hook = None
+                    if MEMORY_ID:
+                      try:
+                        print(
+                          f"[invoke] Initializing memory with ID={MEMORY_ID} in region {REGION}"
+                        )
+                        memory_client = MemoryClient(region_name=REGION)
+                        memory_hook = MemoryHook(
+                          memory_client=memory_client,
+                          memory_id=MEMORY_ID,
+                          actor_id=actor_id,
+                          session_id=session_id,
+                        )
+                        print("[invoke] Memory hook initialized")
+                      except Exception as mem_err:
+                        print(f"[invoke] Memory init failed: {mem_err}")
+
+                    # Create agent
+                    agent_kwargs = {
+                      "model": model,
+                      "tools": tools,
+                      "system_prompt": SYSTEM_PROMPT,
+                    }
+                    if memory_hook:
+                      agent_kwargs["hooks"] = [memory_hook]
+                    agent = Agent(**agent_kwargs)
+
+                    # Invoke
+                    response = agent(user_input)
+                    response_text = response.message["content"][0]["text"]
+
+                    return {
+                      "status": "success",
+                      "response": response_text,
+                      "sessionId": session_id,
+                      "actorId": actor_id,
+                      "memoryEnabled": bool(memory_hook),
+                    }
+
                   except Exception as e:
-                      print(f"[invoke] ERROR: {e}")
-                      traceback.print_exc()
-                      return {"status": "error", "response": str(e), "sessionId": session_id}
+                    print(f"[invoke] ERROR: {e}")
+                    traceback.print_exc()
+                    return {"status": "error", "response": str(e), "sessionId": session_id}
 
               if __name__ == "__main__":
                   app.run()
