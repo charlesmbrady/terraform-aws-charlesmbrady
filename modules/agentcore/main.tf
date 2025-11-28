@@ -33,11 +33,12 @@ resource "aws_bedrockagentcore_agent_runtime" "main" {
     network_mode = "PUBLIC"
   }
 
-  # Pass model + instruction + rag bucket to the runtime container/code
+  # Pass model + instruction + rag bucket + memory ID to the runtime container/code
   environment_variables = {
     AGENT_INSTRUCTION = var.agent_instruction
     FOUNDATION_MODEL  = var.foundation_model
     RAG_BUCKET        = var.rag_enabled ? local.rag_bucket_effective_name : ""
+    MEMORY_ID         = var.enable_memory ? aws_bedrockagentcore_memory.main[0].id : ""
   }
 
   tags = {
@@ -279,134 +280,282 @@ resource "aws_codebuild_project" "basic_agent_image" {
     buildspec = <<-EOT
       version: 0.2
       phases:
+        install:
+          commands:
+            - echo Installing dependencies...
+            - yum install -y git
         pre_build:
           commands:
             - echo Logging in to Amazon ECR...
             - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+            
+            # Download runtime code from module (assumes this module is in a git repo or accessible path)
+            # For now, we'll fetch from the Terraform module path by cloning or copying
+            # Alternative: Store runtime_code in S3 and download here
+            - echo Preparing runtime code...
+            
         build:
           commands:
             - echo Build started on `date`
-            - echo Building the Docker image for basic agent ARM64...
+            - echo Building the Docker image for AgentCore runtime ARM64...
 
-            # Step 1.1: Create requirements.txt
+            # Create requirements.txt
             - |
               cat > requirements.txt << 'EOF'
               strands-agents
               boto3
               bedrock-agentcore
+              aws-opentelemetry-distro>=0.10.1
               EOF
 
-            # Step 1.2: Create my_agent.py (enhanced version with proper input handling & debug logs)
+            # Create main.py from your actual runtime code
+            # Note: This embeds your updated main.py with memory support
             - |
-              cat > my_agent.py << 'EOF'
-              import os, sys, traceback, json, time
-              from strands import Agent
-              from bedrock_agentcore.runtime import BedrockAgentCoreApp
+              cat > main.py << 'MAINPY'
+              """
+              AgentCore Runtime Entrypoint - Portfolio Assistant with Memory
+              """
+              import os
+              import sys
+              import traceback
+              import boto3
 
+              # Inject vendored directory (if present) into sys.path early
+              _BASE_DIR = os.path.dirname(__file__)
+              _VENDORED = os.path.join(_BASE_DIR, "vendored")
+              if os.path.isdir(_VENDORED) and _VENDORED not in sys.path:
+                  sys.path.insert(0, _VENDORED)
+                  print(f"[startup] Added vendored path: {_VENDORED}")
+
+              print("[startup] Beginning runtime import sequence")
+              try:
+                  from bedrock_agentcore.runtime import BedrockAgentCoreApp
+                  from bedrock_agentcore.memory import MemoryClient
+                  from strands import Agent
+                  from strands.models import BedrockModel
+                  from strands.tools import tool
+                  from memory_hook_provider import MemoryHook
+                  print("[startup] Imported bedrock_agentcore + strands + memory successfully")
+              except Exception as import_err:
+                  print(f"[startup-error] Import failure: {import_err}")
+                  traceback.print_exc()
+
+              # Get AWS region
+              _session_region = boto3.session.Session().region_name
+              REGION = _session_region or os.environ.get("AWS_REGION") or os.environ.get("AWS_DEFAULT_REGION") or "us-east-1"
+
+              # Read configuration from environment
+              MODEL_ID = os.environ.get("FOUNDATION_MODEL", "anthropic.claude-3-5-sonnet-20240620-v1:0")
+              AGENT_INSTRUCTION = os.environ.get("AGENT_INSTRUCTION", "You are a helpful assistant.")
+              RAG_BUCKET = os.environ.get("RAG_BUCKET", "")
+              MEMORY_ID = os.environ.get("MEMORY_ID", "")
+
+              # Portfolio-focused system prompt
+              SYSTEM_PROMPT = f"""You are Charles Brady's AI portfolio assistant. Your role is to have natural, engaging conversations about Charles's professional work, technical expertise, and projects.
+
+              ## About Charles Brady
+              Charles is a full-stack software engineer and cloud architect with expertise in AWS, Terraform, TypeScript/JavaScript, Python, and AI/ML.
+
+              Key projects include:
+              - Charlava.com: Serverless AWS platform
+              - CB-Common: Enterprise monorepo with shared libraries
+              - AgentCore: AI agent runtime with conversational memory
+              - JamCam: Real-time 3D motion tracking
+              - Guitar Normal Guy: AI-powered image processing
+
+              Be conversational, provide technical details, and use conversation history to maintain context.
+
+              {AGENT_INSTRUCTION}
+              """
+
+              # Initialize model
+              try:
+                  model = BedrockModel(model_id=MODEL_ID, region_name=REGION)
+                  print(f"[startup] Initialized BedrockModel {MODEL_ID} region {REGION}")
+              except Exception as model_err:
+                  print(f"[startup-error] Model init failed: {model_err}")
+                  model = None
+
+              # Initialize the AgentCore Runtime App
               app = BedrockAgentCoreApp()
+              print(f"[startup] Runtime ready - Model: {MODEL_ID}, Region: {REGION}, Memory: {MEMORY_ID or 'disabled'}")
 
-              def _log(msg: str):
-                # Simple structured-ish logging; CloudWatch will capture stdout
-                print(json.dumps({"level": "DEBUG", "msg": msg, "ts": time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}))
-                sys.stdout.flush()
+              # Tools
+              @tool
+              def get_project_details(project_name: str) -> str:
+                  """Get detailed information about Charles's projects"""
+                  projects = {
+                      "charlava": "Full-stack AWS serverless platform with Lambda, API Gateway, DynamoDB, Cognito, CloudFront",
+                      "cb-common": "Enterprise Nx monorepo with shared TypeScript libraries, React apps, Express APIs",
+                      "agentcore": "AWS Bedrock agent runtime with conversational AI and persistent memory",
+                      "jamcam": "Real-time 3D motion tracking with computer vision",
+                      "guitar-normal-guy": "AI-powered image processing with YOLO object detection"
+                  }
+                  return projects.get(project_name.lower(), f"Project '{project_name}' not found. Available: {', '.join(projects.keys())}")
 
-              SYSTEM_PROMPT = os.getenv("AGENT_INSTRUCTION", "You are a helpful assistant. Respond clearly and concisely.")
-
-              CAPABILITIES_TEXT = (
-                "I can help you with: \n"
-                "• Product technical specifications (laptops, smartphones, headphones, monitors)\n"
-                "• Return policy details by product category\n"
-                "Ask: 'product info <type>' or 'return policy <category>' to begin."
-              )
-
-              def create_basic_agent() -> Agent:
-                return Agent(system_prompt=SYSTEM_PROMPT, name="BasicAgent")
-
-              def handle_structured_query(query: str) -> str:
-                ql = query.lower().strip()
-                if ql.startswith("product info"):
-                  parts = ql.split()
-                  if len(parts) >= 3:
-                    product = parts[-1]
-                    return f"(stub) Product info for {product}: specs forthcoming."
-                  return "Please specify a product type, e.g. 'product info laptops'."
-                if ql.startswith("return policy"):
-                  parts = ql.split()
-                  if len(parts) >= 3:
-                    cat = parts[-1]
-                    return f"(stub) Return policy for {cat}: details forthcoming."
-                  return "Please specify a category, e.g. 'return policy smartphones'."
-                if "help" in ql or "what can" in ql:
-                  return CAPABILITIES_TEXT
-                return "General query received. Ask 'help' to see capabilities."
+              @tool
+              def get_technical_expertise(area: str) -> str:
+                  """Get information about Charles's technical expertise"""
+                  expertise = {
+                      "aws": "Advanced - Lambda, API Gateway, DynamoDB, S3, Cognito, CloudFront, Bedrock, IAM",
+                      "terraform": "Advanced - Multi-environment deployments, custom modules, AWS provider",
+                      "typescript": "Advanced - React, Node.js, Express, type-safe architectures, Nx monorepo",
+                      "python": "Advanced - AI/ML, computer vision, backend services, AWS Lambda",
+                      "ai": "Intermediate-Advanced - Bedrock, conversational agents, computer vision, ML pipelines"
+                  }
+                  return expertise.get(area.lower(), f"Area '{area}' not found. Available: {', '.join(expertise.keys())}")
 
               @app.entrypoint
-              async def invoke(payload=None):
-                start = time.time()
-                try:
-                  _log(f"Raw payload: {payload}")
-                  query = ""
-                  if isinstance(payload, dict):
-                    query = (
-                      payload.get("input") or
-                      payload.get("prompt") or
-                      payload.get("inputText") or
-                      payload.get("text") or
-                      payload.get("message") or
-                      payload.get("query") or ""
-                    )
-                  elif isinstance(payload, str):
-                    query = payload
-                  query = query or "What can you help me with?"
-                  _log(f"Extracted query: {query}")
+              async def invoke(payload, context=None):
+                  """AgentCore entrypoint with memory support"""
+                  # Extract input and session context
+                  user_input = payload.get("input") or payload.get("prompt", "")
+                  if not user_input and isinstance(payload, str):
+                      user_input = payload
+                  if not user_input and isinstance(payload, dict):
+                      user_input = payload.get("inputText") or payload.get("text") or payload.get("message") or payload.get("query") or ""
 
-                  # Lightweight intent routing before LLM
-                  routed = handle_structured_query(query)
-                  _log(f"Routed response (pre-LLM): {routed}")
+                  session_id = payload.get("sessionId", "default-session")
+                  actor_id = payload.get("actorId", "anonymous")
 
-                  # LLM augmentation (optional); keep short to control cost
-                  agent = create_basic_agent()
-                  llm_response = agent(f"User asked: {query}\nContext hint: {routed}\nRespond helpfully.")
-                  text = llm_response.message['content'][0]['text']
-                  _log(f"LLM raw response: {text}")
+                  print(f"[invoke] Session: {session_id}, Actor: {actor_id}, Input: {user_input[:100]}...")
 
-                  elapsed = round(time.time() - start, 3)
-                  return {"status": "success", "response": text, "elapsed_sec": elapsed}
-                except Exception as e:
-                  _log(f"ERROR: {e}\n{traceback.format_exc()}")
-                  return {"status": "error", "error": str(e)}
+                  try:
+                      tools = [get_project_details, get_technical_expertise]
+
+                      if model is None:
+                          return {"status": "error", "response": "Model not initialized", "sessionId": session_id}
+
+                      # Initialize memory if configured
+                      memory_hook = None
+                      if MEMORY_ID:
+                          try:
+                              print(f"[invoke] Initializing memory with ID={MEMORY_ID}")
+                              memory_client = MemoryClient()
+                              memory_hook = MemoryHook(
+                                  memory_client=memory_client,
+                                  memory_id=MEMORY_ID,
+                                  actor_id=actor_id,
+                                  session_id=session_id,
+                              )
+                              print("[invoke] Memory hook initialized")
+                          except Exception as mem_err:
+                              print(f"[invoke] Memory init failed: {mem_err}")
+
+                      # Create agent
+                      agent_kwargs = {"model": model, "tools": tools, "system_prompt": SYSTEM_PROMPT}
+                      if memory_hook:
+                          agent_kwargs["hooks"] = [memory_hook]
+                      agent = Agent(**agent_kwargs)
+
+                      # Invoke
+                      response = agent(user_input)
+                      response_text = response.message["content"][0]["text"]
+                      
+                      return {
+                          "status": "success",
+                          "response": response_text,
+                          "sessionId": session_id,
+                          "actorId": actor_id,
+                          "memoryEnabled": bool(memory_hook)
+                      }
+
+                  except Exception as e:
+                      print(f"[invoke] ERROR: {e}")
+                      traceback.print_exc()
+                      return {"status": "error", "response": str(e), "sessionId": session_id}
 
               if __name__ == "__main__":
-                _log("Starting app server on port 8080")
-                app.run()
-              EOF
+                  app.run()
+              MAINPY
 
-            # Step 1.3: Create Dockerfile
+            # Create memory_hook_provider.py
+            - |
+              cat > memory_hook_provider.py << 'MEMORYHOOK'
+              from bedrock_agentcore.memory import MemoryClient
+              from strands.hooks.events import AgentInitializedEvent, MessageAddedEvent
+              from strands.hooks.registry import HookProvider, HookRegistry
+              import copy
+
+              class MemoryHook(HookProvider):
+                  def __init__(self, memory_client: MemoryClient, memory_id: str, actor_id: str, session_id: str):
+                      self.memory_client = memory_client
+                      self.memory_id = memory_id
+                      self.actor_id = actor_id
+                      self.session_id = session_id
+                      print(f"[MemoryHook] Init - memory={memory_id}, actor={actor_id}, session={session_id}")
+
+                  def on_agent_initialized(self, event: AgentInitializedEvent):
+                      try:
+                          print(f"[MemoryHook] Loading history for session {self.session_id}")
+                          recent_turns = self.memory_client.get_last_k_turns(
+                              memory_id=self.memory_id,
+                              actor_id=self.actor_id,
+                              session_id=self.session_id,
+                              k=5
+                          )
+                          if not recent_turns:
+                              print("[MemoryHook] No previous history")
+                              return
+                          context_messages = []
+                          for turn in recent_turns:
+                              for message in turn["messages"]:
+                                  role = "assistant" if message["role"] == "assistant" else "user"
+                                  content = message["content"]["text"]
+                                  context_messages.append({"role": role, "content": [{"text": content}]})
+                          print(f"[MemoryHook] Loaded {len(context_messages)} messages")
+                          event.agent.messages = context_messages
+                      except Exception as e:
+                          print(f"[MemoryHook] Load error: {e}")
+
+                  def on_message_added(self, event: MessageAddedEvent):
+                      messages = copy.deepcopy(event.agent.messages)
+                      try:
+                          if messages[-1]["role"] not in ["user", "assistant"]:
+                              return
+                          if "text" not in messages[-1]["content"][0]:
+                              return
+                          message_text = messages[-1]["content"][0]["text"]
+                          message_role = messages[-1]["role"]
+                          print(f"[MemoryHook] Saving {message_role} message")
+                          self.memory_client.save_conversation(
+                              memory_id=self.memory_id,
+                              actor_id=self.actor_id,
+                              session_id=self.session_id,
+                              messages=[(message_text, message_role)]
+                          )
+                      except Exception as e:
+                          print(f"[MemoryHook] Save error: {e}")
+
+                  def register_hooks(self, registry: HookRegistry):
+                      registry.add_callback(MessageAddedEvent, self.on_message_added)
+                      registry.add_callback(AgentInitializedEvent, self.on_agent_initialized)
+              MEMORYHOOK
+
+            # Create Dockerfile
             - |
               cat > Dockerfile << 'EOF'
               FROM public.ecr.aws/docker/library/python:3.11-slim
               WORKDIR /app
 
               COPY requirements.txt requirements.txt
-              RUN pip install --no-cache-dir -r requirements.txt && \
-                  pip install --no-cache-dir aws-opentelemetry-distro>=0.10.1
+              RUN pip install --no-cache-dir -r requirements.txt
 
               ENV AWS_REGION=$AWS_DEFAULT_REGION
               ENV AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION
 
-              # Create non-root user
               RUN useradd -m -u 1000 bedrock_agentcore
               USER bedrock_agentcore
 
               EXPOSE 8080
               EXPOSE 8000
 
-              COPY . .
+              COPY main.py memory_hook_provider.py ./
 
-              CMD ["opentelemetry-instrument", "python", "-m", "my_agent"]
+              CMD ["opentelemetry-instrument", "python", "main.py"]
               EOF
 
-            # Step 1.4: Build the image
+            # Build the image
             - echo Building ARM64 image...
             - docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG .
             - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
