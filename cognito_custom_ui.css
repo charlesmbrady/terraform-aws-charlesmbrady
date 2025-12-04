@@ -1,17 +1,17 @@
 .banner-customizable {
   background-color: transparent;
-  color: #c7d2e5;
+  color: #ffffff;
   padding: 20px 0;
   text-align: center;
 }
 
 .background-customizable {
-  background-image: url("https://charshard.s3.us-east-1.amazonaws.com/charshard_bg_1.png");
+  /* background-image: url("https://charshard.s3.us-east-1.amazonaws.com/charshard_bg_1.png");
   background-size: cover;
   background-position: center;
-  background-repeat: no-repeat;
+  background-repeat: no-repeat; */
   font-family: sans-serif;
-  box-shadow: 0 0 0 10000px #1e2a38;
+  box-shadow: 0 0 0 10000px #070000;
   padding: 20px;
 }
 
@@ -35,7 +35,7 @@
 
 .textDescription-customizable {
   font-size: 16px;
-  color: #dfe6ed;
+  color: #1e2a38;
   padding-top: 10px;
   padding-bottom: 10px;
   display: block;
@@ -43,7 +43,7 @@
 
 .label-customizable {
   font-weight: 500;
-  color: #c7d2e5;
+  color: #1e2a38;
 }
 
 .submitButton-customizable {
@@ -64,11 +64,11 @@
 .redirect-customizable {
   margin-top: 10px;
   text-align: center;
-  color: #dfe6ed;
+  color: #1e2a38;
 }
 
 .legalText-customizable {
-  color: #a0aaba;
+  color: #1e2a38;
   font-size: 11px;
   text-align: center;
   margin-top: 20px;
