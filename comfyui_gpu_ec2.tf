@@ -124,7 +124,7 @@ variable "clawdbot_allow_public_ingress" {
 }
 
 locals {
-  comfyui_effective_subnet_id = var.comfyui_subnet_id != "" ? var.comfyui_subnet_id : try(data.aws_subnets.comfyui_vpc_subnets[0].ids[0], null)
+  comfyui_effective_subnet_id = var.comfyui_subnet_id != "" ? var.comfyui_subnet_id : try(data.aws_subnets.comfyui_public_vpc_subnets[0].ids[0], null)
 
   comfyui_user_data = <<-EOT
     #!/usr/bin/env bash
@@ -149,6 +149,13 @@ locals {
       xorg \
       xfce4 \
       xfce4-goodies
+
+    # Ensure SSM agent is available and started (some images do not enable it by default).
+    snap install amazon-ssm-agent --classic || true
+    systemctl enable snap.amazon-ssm-agent.amazon-ssm-agent.service || true
+    systemctl restart snap.amazon-ssm-agent.amazon-ssm-agent.service || true
+    systemctl enable amazon-ssm-agent || true
+    systemctl restart amazon-ssm-agent || true
 
     # Clone and install ComfyUI under /opt for shared system usage.
     if [ ! -d /opt/ComfyUI ]; then
@@ -250,12 +257,17 @@ data "aws_ssm_parameter" "comfyui_gpu_ami" {
   name  = var.comfyui_ami_ssm_parameter_name
 }
 
-data "aws_subnets" "comfyui_vpc_subnets" {
+data "aws_subnets" "comfyui_public_vpc_subnets" {
   count = var.comfyui_ec2_enabled && var.comfyui_subnet_id == "" ? 1 : 0
 
   filter {
     name   = "vpc-id"
     values = [data.aws_vpc.main.id]
+  }
+
+  filter {
+    name   = "map-public-ip-on-launch"
+    values = ["true"]
   }
 }
 
@@ -385,7 +397,7 @@ resource "aws_instance" "comfyui_gpu_host" {
   lifecycle {
     precondition {
       condition     = local.comfyui_effective_subnet_id != null
-      error_message = "No subnet found. Set var.comfyui_subnet_id to a public subnet ID with internet gateway routing."
+      error_message = "No public subnet found. Set var.comfyui_subnet_id to a public subnet ID with internet gateway routing."
     }
   }
 
