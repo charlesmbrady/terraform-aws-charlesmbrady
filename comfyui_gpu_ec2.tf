@@ -39,6 +39,24 @@ variable "comfyui_subnet_id" {
   default     = ""
 }
 
+variable "comfyui_manage_public_network" {
+  type        = bool
+  description = "If true and comfyui_subnet_id is empty, create a dedicated public subnet + IGW route for the host."
+  default     = true
+}
+
+variable "comfyui_public_subnet_cidr" {
+  type        = string
+  description = "Optional CIDR block for the managed public subnet. Leave blank for auto-derived CIDR."
+  default     = ""
+}
+
+variable "comfyui_public_subnet_az" {
+  type        = string
+  description = "Optional AZ name for the managed public subnet (e.g. us-east-1a). Leave blank to use primary AZ."
+  default     = ""
+}
+
 variable "comfyui_ami_ssm_parameter_name" {
   type        = string
   description = "SSM parameter that resolves to a GPU-ready AMI ID."
@@ -124,7 +142,14 @@ variable "clawdbot_allow_public_ingress" {
 }
 
 locals {
-  comfyui_effective_subnet_id = var.comfyui_subnet_id != "" ? var.comfyui_subnet_id : try(data.aws_subnets.comfyui_public_vpc_subnets[0].ids[0], null)
+  comfyui_feature_enabled = var.comfyui_ec2_enabled && lower(var.environment_tag) == "test"
+
+  comfyui_managed_subnet_cidr = var.comfyui_public_subnet_cidr != "" ? var.comfyui_public_subnet_cidr : cidrsubnet(data.aws_vpc.main.cidr_block, 4, 15)
+  comfyui_managed_subnet_az   = var.comfyui_public_subnet_az != "" ? var.comfyui_public_subnet_az : data.aws_availability_zone.primary.name
+
+  comfyui_effective_subnet_id = var.comfyui_subnet_id != "" ? var.comfyui_subnet_id : (
+    var.comfyui_manage_public_network ? try(aws_subnet.comfyui_public[0].id, null) : try(data.aws_subnets.comfyui_public_vpc_subnets[0].ids[0], null)
+  )
 
   comfyui_user_data = <<-EOT
     #!/usr/bin/env bash
@@ -253,12 +278,12 @@ locals {
 }
 
 data "aws_ssm_parameter" "comfyui_gpu_ami" {
-  count = var.comfyui_ec2_enabled ? 1 : 0
+  count = local.comfyui_feature_enabled ? 1 : 0
   name  = var.comfyui_ami_ssm_parameter_name
 }
 
 data "aws_subnets" "comfyui_public_vpc_subnets" {
-  count = var.comfyui_ec2_enabled && var.comfyui_subnet_id == "" ? 1 : 0
+  count = local.comfyui_feature_enabled && var.comfyui_subnet_id == "" && !var.comfyui_manage_public_network ? 1 : 0
 
   filter {
     name   = "vpc-id"
@@ -271,8 +296,46 @@ data "aws_subnets" "comfyui_public_vpc_subnets" {
   }
 }
 
+resource "aws_internet_gateway" "comfyui" {
+  count  = local.comfyui_feature_enabled && var.comfyui_subnet_id == "" && var.comfyui_manage_public_network ? 1 : 0
+  vpc_id = data.aws_vpc.main.id
+
+  tags = merge(local.comfyui_tags, { Name = "${var.name_prefix}-${var.environment_tag}-comfyui-igw" })
+}
+
+resource "aws_subnet" "comfyui_public" {
+  count = local.comfyui_feature_enabled && var.comfyui_subnet_id == "" && var.comfyui_manage_public_network ? 1 : 0
+
+  vpc_id                  = data.aws_vpc.main.id
+  availability_zone       = local.comfyui_managed_subnet_az
+  cidr_block              = local.comfyui_managed_subnet_cidr
+  map_public_ip_on_launch = true
+
+  tags = merge(local.comfyui_tags, { Name = "${var.name_prefix}-${var.environment_tag}-comfyui-public-subnet" })
+}
+
+resource "aws_route_table" "comfyui_public" {
+  count  = local.comfyui_feature_enabled && var.comfyui_subnet_id == "" && var.comfyui_manage_public_network ? 1 : 0
+  vpc_id = data.aws_vpc.main.id
+
+  tags = merge(local.comfyui_tags, { Name = "${var.name_prefix}-${var.environment_tag}-comfyui-public-rt" })
+}
+
+resource "aws_route" "comfyui_public_default" {
+  count                  = local.comfyui_feature_enabled && var.comfyui_subnet_id == "" && var.comfyui_manage_public_network ? 1 : 0
+  route_table_id         = aws_route_table.comfyui_public[0].id
+  destination_cidr_block = "0.0.0.0/0"
+  gateway_id             = aws_internet_gateway.comfyui[0].id
+}
+
+resource "aws_route_table_association" "comfyui_public" {
+  count          = local.comfyui_feature_enabled && var.comfyui_subnet_id == "" && var.comfyui_manage_public_network ? 1 : 0
+  subnet_id      = aws_subnet.comfyui_public[0].id
+  route_table_id = aws_route_table.comfyui_public[0].id
+}
+
 resource "aws_security_group" "comfyui_host" {
-  count       = var.comfyui_ec2_enabled ? 1 : 0
+  count       = local.comfyui_feature_enabled ? 1 : 0
   name        = "${var.name_prefix}-${var.environment_tag}-comfyui-host-sg"
   description = "Security group for ComfyUI GPU host"
   vpc_id      = data.aws_vpc.main.id
@@ -322,7 +385,7 @@ resource "aws_security_group" "comfyui_host" {
 }
 
 resource "aws_iam_role" "comfyui_ec2_role" {
-  count = var.comfyui_ec2_enabled ? 1 : 0
+  count = local.comfyui_feature_enabled ? 1 : 0
   name  = "${var.name_prefix}-${var.environment_tag}-comfyui-ec2-role"
 
   assume_role_policy = jsonencode({
@@ -342,13 +405,13 @@ resource "aws_iam_role" "comfyui_ec2_role" {
 }
 
 resource "aws_iam_role_policy_attachment" "comfyui_ssm_core" {
-  count      = var.comfyui_ec2_enabled ? 1 : 0
+  count      = local.comfyui_feature_enabled ? 1 : 0
   role       = aws_iam_role.comfyui_ec2_role[0].name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
 resource "aws_iam_instance_profile" "comfyui_ec2_profile" {
-  count = var.comfyui_ec2_enabled ? 1 : 0
+  count = local.comfyui_feature_enabled ? 1 : 0
   name  = "${var.name_prefix}-${var.environment_tag}-comfyui-ec2-profile"
   role  = aws_iam_role.comfyui_ec2_role[0].name
 
@@ -356,7 +419,7 @@ resource "aws_iam_instance_profile" "comfyui_ec2_profile" {
 }
 
 resource "aws_key_pair" "comfyui_key_pair" {
-  count      = var.comfyui_ec2_enabled && var.comfyui_public_key != "" ? 1 : 0
+  count      = local.comfyui_feature_enabled && var.comfyui_public_key != "" ? 1 : 0
   key_name   = "${var.name_prefix}-${var.environment_tag}-comfyui-key"
   public_key = var.comfyui_public_key
 
@@ -364,7 +427,7 @@ resource "aws_key_pair" "comfyui_key_pair" {
 }
 
 resource "aws_instance" "comfyui_gpu_host" {
-  count = var.comfyui_ec2_enabled ? 1 : 0
+  count = local.comfyui_feature_enabled ? 1 : 0
 
   ami           = data.aws_ssm_parameter.comfyui_gpu_ami[0].value
   instance_type = var.comfyui_instance_type
@@ -397,7 +460,7 @@ resource "aws_instance" "comfyui_gpu_host" {
   lifecycle {
     precondition {
       condition     = local.comfyui_effective_subnet_id != null
-      error_message = "No public subnet found. Set var.comfyui_subnet_id to a public subnet ID with internet gateway routing."
+      error_message = "No public subnet found. Set var.comfyui_subnet_id or enable var.comfyui_manage_public_network to create one."
     }
   }
 
