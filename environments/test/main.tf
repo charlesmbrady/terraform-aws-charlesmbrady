@@ -111,15 +111,15 @@ module "main" {
     local.apps_domain_logout_urls
   )
 
-  # /* ------------------------ ComfyUI + ClawdBot Host ------------------------ */
+  # /* ----------------------------- ComfyUI Host ----------------------------- */
   # Enabled only in test environment. Production keeps module defaults (disabled).
-  comfyui_ec2_enabled = false
+  comfyui_ec2_enabled = true
 
   # NOTE: For NAT-free internet access, this should be a public subnet with IGW route.
   # If omitted, module auto-selects first subnet in the VPC.
   # comfyui_subnet_id = "subnet-xxxxxxxx"
 
-  comfyui_instance_type       = "g5.2xlarge"
+  comfyui_instance_type       = "g6e.xlarge"
   comfyui_root_volume_size_gb = 500
   comfyui_delete_root_on_termination = true
 
@@ -131,15 +131,6 @@ module "main" {
   # Optional Parsec bootstrap for remote desktop workflow.
   comfyui_parsec_install_enabled = false
   comfyui_parsec_deb_url         = ""
-
-  # ClawdBot enabled side-by-side with ComfyUI.
-  clawdbot_enabled              = true
-  clawdbot_git_repo             = "https://github.com/charlesbrady/clawdbot.git"
-  clawdbot_git_ref              = "main"
-  clawdbot_requirements_file    = "requirements.txt"
-  clawdbot_start_command        = "python -m uvicorn app.main:app --host 0.0.0.0 --port 3001"
-  clawdbot_port                 = 3001
-  clawdbot_allow_public_ingress = false
 
   # Trial cleanup checklist:
   # 1) Stop the host when idle: scripts/comfyui-stop.sh <instance-id> us-east-1

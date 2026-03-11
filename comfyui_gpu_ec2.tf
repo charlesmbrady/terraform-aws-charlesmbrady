@@ -99,48 +99,6 @@ variable "comfyui_parsec_deb_url" {
   default     = ""
 }
 
-variable "clawdbot_enabled" {
-  type        = bool
-  description = "If true, clone and run ClawdBot side-by-side with ComfyUI."
-  default     = false
-}
-
-variable "clawdbot_git_repo" {
-  type        = string
-  description = "HTTPS git repository URL for ClawdBot."
-  default     = ""
-}
-
-variable "clawdbot_git_ref" {
-  type        = string
-  description = "Git branch/tag/commit for ClawdBot checkout."
-  default     = "main"
-}
-
-variable "clawdbot_requirements_file" {
-  type        = string
-  description = "Path (inside ClawdBot repo) to pip requirements file."
-  default     = "requirements.txt"
-}
-
-variable "clawdbot_start_command" {
-  type        = string
-  description = "Command to start ClawdBot inside its project directory and venv."
-  default     = "python -m uvicorn app.main:app --host 0.0.0.0 --port 3001"
-}
-
-variable "clawdbot_port" {
-  type        = number
-  description = "Port exposed by ClawdBot service."
-  default     = 3001
-}
-
-variable "clawdbot_allow_public_ingress" {
-  type        = bool
-  description = "Allow inbound access to ClawdBot port from comfyui_ingress_cidrs."
-  default     = false
-}
-
 locals {
   comfyui_feature_enabled = var.comfyui_ec2_enabled && lower(var.environment_tag) == "test"
 
@@ -164,6 +122,7 @@ locals {
       wget \
       unzip \
       jq \
+      ca-certificates \
       python3 \
       python3-venv \
       python3-pip \
@@ -171,6 +130,7 @@ locals {
       ffmpeg \
       libgl1 \
       libglib2.0-0 \
+      netcat-openbsd \
       xorg \
       xfce4 \
       xfce4-goodies
@@ -216,48 +176,6 @@ locals {
     systemctl daemon-reload
     systemctl enable comfyui
     systemctl start comfyui
-
-    # Optional ClawdBot setup on the same host.
-    if [ "${var.clawdbot_enabled}" = "true" ] && [ -n "${var.clawdbot_git_repo}" ]; then
-      if [ ! -d /opt/ClawdBot ]; then
-        git clone "${var.clawdbot_git_repo}" /opt/ClawdBot
-      fi
-
-      cd /opt/ClawdBot
-      git fetch --all || true
-      git checkout "${var.clawdbot_git_ref}" || true
-
-      python3 -m venv /opt/ClawdBot/.venv
-      /opt/ClawdBot/.venv/bin/pip install --upgrade pip wheel
-
-      if [ -f "/opt/ClawdBot/${var.clawdbot_requirements_file}" ]; then
-        /opt/ClawdBot/.venv/bin/pip install -r "/opt/ClawdBot/${var.clawdbot_requirements_file}"
-      fi
-
-      chown -R ubuntu:ubuntu /opt/ClawdBot
-
-      cat >/etc/systemd/system/clawdbot.service <<'SERVICE'
-      [Unit]
-      Description=ClawdBot Service
-      After=network-online.target
-      Wants=network-online.target
-
-      [Service]
-      Type=simple
-      User=ubuntu
-      WorkingDirectory=/opt/ClawdBot
-      ExecStart=/bin/bash -lc 'source /opt/ClawdBot/.venv/bin/activate && ${var.clawdbot_start_command}'
-      Restart=always
-      RestartSec=5
-
-      [Install]
-      WantedBy=multi-user.target
-      SERVICE
-
-      systemctl daemon-reload
-      systemctl enable clawdbot
-      systemctl start clawdbot
-    fi
 
     # Optional Parsec install hook for cloud-host workflow.
     if [ "${var.comfyui_parsec_install_enabled}" = "true" ] && [ -n "${var.comfyui_parsec_deb_url}" ]; then
@@ -357,17 +275,6 @@ resource "aws_security_group" "comfyui_host" {
       description = "ComfyUI"
       from_port   = 8188
       to_port     = 8188
-      protocol    = "tcp"
-      cidr_blocks = var.comfyui_ingress_cidrs
-    }
-  }
-
-  dynamic "ingress" {
-    for_each = var.clawdbot_allow_public_ingress && length(var.comfyui_ingress_cidrs) > 0 ? [1] : []
-    content {
-      description = "ClawdBot"
-      from_port   = var.clawdbot_port
-      to_port     = var.clawdbot_port
       protocol    = "tcp"
       cidr_blocks = var.comfyui_ingress_cidrs
     }
@@ -490,9 +397,4 @@ output "comfyui_stop_instance_command" {
 output "comfyui_ssm_shell_command" {
   description = "CLI command to open an SSM shell without SSH key management"
   value       = try("aws ssm start-session --target ${aws_instance.comfyui_gpu_host[0].id}", null)
-}
-
-output "clawdbot_public_url" {
-  description = "ClawdBot URL if public ingress is enabled"
-  value       = try("http://${aws_instance.comfyui_gpu_host[0].public_ip}:${var.clawdbot_port}", null)
 }
