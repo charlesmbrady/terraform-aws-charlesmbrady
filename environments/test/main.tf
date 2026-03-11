@@ -113,7 +113,7 @@ module "main" {
 
   # /* ----------------------------- ComfyUI Host ----------------------------- */
   # Enabled only in test environment. Production keeps module defaults (disabled).
-  comfyui_ec2_enabled = false
+  comfyui_ec2_enabled = true
 
   # NOTE: For NAT-free internet access, this should be a public subnet with IGW route.
   # If omitted, module auto-selects first subnet in the VPC.
