@@ -236,7 +236,7 @@ variable "apps_alias_name" {
 variable "agentcore_agent_name" {
   type        = string
   description = "Name for the AgentCore agent"
-  default     = "assistant"
+  default     = "charlesmbrady-assistant"
 }
 
 variable "agentcore_agent_instruction" {
@@ -247,8 +247,8 @@ variable "agentcore_agent_instruction" {
 
 variable "agentcore_foundation_model" {
   type        = string
-  description = "The foundation model ID to use for the agent"
-  default     = "anthropic.claude-3-5-sonnet-20240620-v1:0"
+  description = "The Bedrock model ID or inference profile ID to use for the agent"
+  default     = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 }
 
 variable "agentcore_enable_memory" {

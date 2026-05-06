@@ -59,10 +59,11 @@ variable "agent_instruction" {
   default     = "You are a helpful assistant for the charlesmbrady.com platform. You can help users with their queries and provide information about available services."
 }
 
+
 variable "foundation_model" {
   type        = string
-  description = "The foundation model ID to use for the agent (e.g., anthropic.claude-3-5-sonnet-20240620-v1:0)"
-  default     = "anthropic.claude-3-5-sonnet-20240620-v1:0"
+  description = "The Bedrock model ID or inference profile ID to use for the agent (e.g., us.anthropic.claude-haiku-4-5-20251001-v1:0)"
+  default     = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 }
 
 variable "enable_memory" {

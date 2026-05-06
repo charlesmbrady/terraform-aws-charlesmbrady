@@ -58,7 +58,7 @@ print(f"[startup] Using REGION={REGION} for AgentCore runtime")
 
 # Read configuration from environment variables (set by Terraform)
 MODEL_ID = os.environ.get(
-    "FOUNDATION_MODEL", "anthropic.claude-3-5-sonnet-20240620-v1:0"
+    "FOUNDATION_MODEL", "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 )
 AGENT_INSTRUCTION = os.environ.get("AGENT_INSTRUCTION", "You are a helpful assistant.")
 RAG_BUCKET = os.environ.get("RAG_BUCKET", "")

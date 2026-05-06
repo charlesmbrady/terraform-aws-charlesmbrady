@@ -6,14 +6,30 @@
 #### AgentCore Runtime Outputs
 ###############################################################################
 
-## Removed runtime_arn and runtime_id outputs (provider does not export arn/id)
-
 output "runtime_name" {
   description = "Name of the AgentCore runtime"
   value       = aws_bedrockagentcore_agent_runtime.main.agent_runtime_name
 }
 
-## Runtime Endpoint outputs removed (endpoint resource deprecated/not present)
+output "runtime_id" {
+  description = "ID of the AgentCore runtime"
+  value       = aws_bedrockagentcore_agent_runtime.main.agent_runtime_id
+}
+
+output "runtime_arn" {
+  description = "ARN of the AgentCore runtime"
+  value       = aws_bedrockagentcore_agent_runtime.main.agent_runtime_arn
+}
+
+output "runtime_endpoint_name" {
+  description = "Name of the service-managed default AgentCore runtime endpoint qualifier"
+  value       = "DEFAULT"
+}
+
+output "runtime_endpoint_arn" {
+  description = "ARN of the default AgentCore runtime endpoint. AgentCore manages DEFAULT through runtime updates, so this module does not manage or expose an endpoint resource ARN."
+  value       = null
+}
 
 ###############################################################################
 #### Gateway Outputs
@@ -53,8 +69,6 @@ output "memory_table_arn" {
 #### SSM Parameter Outputs
 ###############################################################################
 
-
-## Removed endpoint & qualifier SSM parameter outputs (endpoint resource removed)
 
 ## Removed SSM parameter outputs for runtime/gateway id/arn (parameters deleted)
 

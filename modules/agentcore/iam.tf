@@ -39,7 +39,7 @@ resource "aws_iam_role" "agentcore_runtime" {
 ###############################################################################
 
 data "aws_iam_policy_document" "agentcore_runtime_policy" {
-  # Allow invoking foundation models
+  # Allow invoking Bedrock models and inference profiles
   statement {
     sid    = "BedrockModelInvoke"
     effect = "Allow"
@@ -48,7 +48,9 @@ data "aws_iam_policy_document" "agentcore_runtime_policy" {
       "bedrock:InvokeModelWithResponseStream"
     ]
     resources = [
-      "arn:aws:bedrock:${var.region}::foundation-model/*"
+      "arn:aws:bedrock:${var.region}::foundation-model/*",
+      "arn:aws:bedrock:${var.region}:${var.account_id}:inference-profile/*",
+      "arn:aws:bedrock:${var.region}:${var.account_id}:application-inference-profile/*"
     ]
   }
 
@@ -142,9 +144,9 @@ data "aws_iam_policy_document" "agentcore_runtime_policy" {
 
   # Metrics publishing with namespace condition
   statement {
-    sid    = "CloudWatchMetrics"
-    effect = "Allow"
-    actions = ["cloudwatch:PutMetricData"]
+    sid       = "CloudWatchMetrics"
+    effect    = "Allow"
+    actions   = ["cloudwatch:PutMetricData"]
     resources = ["*"]
     condition {
       test     = "StringEquals"

@@ -24,8 +24,7 @@ module "agentcore" {
   agent_name            = var.agentcore_agent_name
   agent_instruction     = var.agentcore_agent_instruction
   agent_description     = var.agentcore_agent_description
-  # Switch to a faster model to reduce latency
-  foundation_model      = "anthropic.claude-3-haiku-20240307-v1:0"
+  foundation_model      = var.agentcore_foundation_model
   enable_memory         = var.agentcore_enable_memory
   memory_retention_days = var.agentcore_memory_retention_days
   # DIY RAG configuration
