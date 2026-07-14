@@ -21,12 +21,14 @@ module "agentcore" {
   tool_lambda_name = local.services_middleware_app_name
 
   # AgentCore configuration
-  agent_name            = var.agentcore_agent_name
-  agent_instruction     = var.agentcore_agent_instruction
-  agent_description     = var.agentcore_agent_description
-  foundation_model      = var.agentcore_foundation_model
-  enable_memory         = var.agentcore_enable_memory
-  memory_retention_days = var.agentcore_memory_retention_days
+  agent_name                   = var.agentcore_agent_name
+  agent_instruction            = var.agentcore_agent_instruction
+  agent_description            = var.agentcore_agent_description
+  foundation_model             = var.agentcore_foundation_model
+  enable_memory                = var.agentcore_enable_memory
+  memory_retention_days        = var.agentcore_memory_retention_days
+  idle_runtime_session_timeout = 120
+  max_lifetime                 = 900
   # DIY RAG configuration
   # Fully disable DIY RAG for now
   rag_enabled     = false

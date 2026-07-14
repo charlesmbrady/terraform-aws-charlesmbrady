@@ -136,21 +136,21 @@ terraform apply -target=module.agentcore.aws_bedrockagentcore_agent_runtime.main
 ```
 modules/agentcore/
 ├── README.md                    # This file - comprehensive guide
-├── main.tf                      # Core resources + CodeBuild buildspec
+├── main.tf                      # Core resources + CodeBuild project
 ├── iam.tf                       # IAM roles and policies (includes Memory API permissions)
 ├── dynamodb.tf                  # DynamoDB table for legacy memory (deprecated)
 ├── variables.tf                 # Input variables
 ├── outputs.tf                   # Module outputs
 ├── versions.tf                  # Provider requirements
 └── runtime_code/
-    ├── main.py                  # Production runtime code (reference - buildspec is source of truth)
-    ├── memory_hook_provider.py  # Memory persistence hooks (reference)
+    ├── main.py                  # Production runtime entrypoint
+    ├── memory_hook_provider.py  # Memory persistence hooks
     ├── requirements.txt         # Python dependencies
-    ├── build_package.sh         # (Not used - for Lambda-style deployment)
-    └── rebuild_vendored.sh      # (Not used - CodeBuild handles deps)
+    ├── Dockerfile               # AgentCore runtime container
+    └── buildspec.yml            # CodeBuild image build and push steps
 ```
 
-**Important**: The actual runtime code is **embedded in `main.tf` buildspec** (lines ~300-520). The `runtime_code/` directory files are **reference implementations**. CodeBuild generates files from the buildspec during Docker image builds.
+  Terraform archives `runtime_code/`, uploads it to the module source bucket, and passes that archive to CodeBuild. Files in `runtime_code/` are the production source of truth.
 
 ---
 
@@ -169,6 +169,8 @@ Configure in your environment's `terraform.tfvars` or `main.tf`:
 | `foundation_model`      | Bedrock model ID             | `anthropic.claude-3-5-sonnet-20240620-v1:0` | No       |
 | `enable_memory`         | Enable conversation memory   | `true`                                      | No       |
 | `memory_retention_days` | Days to retain history       | `30`                                        | No       |
+| `idle_runtime_session_timeout` | Idle session timeout in seconds | `120`                              | No       |
+| `max_lifetime`          | Maximum session lifetime in seconds | `900`                                  | No       |
 | `rag_enabled`           | Enable RAG embeddings bucket | `true`                                      | No       |
 | `tool_lambda_arn`       | Lambda ARN for tools         | (Lambda ARN)                                | Yes      |
 
@@ -254,12 +256,9 @@ aws codebuild start-build \
 
 When you modify the runtime logic or tools:
 
-#### Option 1: Update Buildspec in main.tf (Recommended)
-
-1. Edit `modules/agentcore/main.tf`
-2. Find the buildspec section (lines ~300-520)
-3. Modify the embedded Python code in the heredoc
-4. Apply changes:
+1. Edit files under `modules/agentcore/runtime_code/`.
+2. Apply the Terraform change so the source archive is uploaded.
+3. Start CodeBuild and update the runtime:
 
 ```bash
 terraform apply -target=module.agentcore.aws_codebuild_project.basic_agent_image
@@ -269,12 +268,6 @@ aws codebuild start-build \
 # Wait for build to complete (~5-10 min)
 terraform apply -target=module.agentcore.aws_bedrockagentcore_agent_runtime.main
 ```
-
-#### Option 2: Update Reference Files
-
-For easier editing, update `runtime_code/main.py` and `runtime_code/memory_hook_provider.py`, then manually sync changes to the buildspec in `main.tf`.
-
-**Note**: The buildspec is the source of truth - `runtime_code/` files are references only.
 
 ### Updating IAM Permissions
 

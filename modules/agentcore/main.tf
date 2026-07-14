@@ -47,6 +47,11 @@ resource "aws_bedrockagentcore_agent_runtime" "main" {
     network_mode = "PUBLIC"
   }
 
+  lifecycle_configuration {
+    idle_runtime_session_timeout = var.idle_runtime_session_timeout
+    max_lifetime                 = var.max_lifetime
+  }
+
   # Pass model + instruction + rag bucket + memory ID to the runtime container/code
   environment_variables = {
     AGENT_INSTRUCTION = var.agent_instruction

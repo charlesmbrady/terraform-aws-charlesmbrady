@@ -1,0 +1,33 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents",
+        "xray:PutTraceSegments",
+        "xray:PutTelemetryRecords"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["kms:GenerateDataKey", "kms:Decrypt"],
+      "Resource": "${kms_key_id}"
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["dynamodb:TransactWriteItems"],
+      "Resource": "${quota_table_arn}"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "bedrock-agentcore:InvokeAgentRuntimeWithWebSocketStream"
+      ],
+      "Resource": "${agentcore_runtime_arn}"
+    }
+  ]
+}

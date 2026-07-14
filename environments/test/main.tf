@@ -87,6 +87,13 @@ module "main" {
     EXAMPLE_ENV_VAR = "example"
   }
 
+  agentcore_socket_enabled = true
+  agentcore_socket_allowed_origins = [
+    local.apps_domain,
+    "http://localhost:4200",
+    "http://localhost:4300"
+  ]
+
   cognito_clients_allowed_oauth_flows                  = ["code"]
   cognito_clients_allowed_oauth_flows_user_pool_client = true
   cognito_clients_allowed_oauth_scopes                 = ["email", "openid", "profile", "aws.cognito.signin.user.admin"]
@@ -119,14 +126,14 @@ module "main" {
   # If omitted, module auto-selects first subnet in the VPC.
   # comfyui_subnet_id = "subnet-xxxxxxxx"
 
-  comfyui_instance_type       = "g6e.4xlarge"
-  comfyui_root_volume_size_gb = 500
+  comfyui_instance_type              = "g6e.4xlarge"
+  comfyui_root_volume_size_gb        = 500
   comfyui_delete_root_on_termination = true
 
   # Keep ingress private and use SSM tunnels for access.
-  comfyui_allow_ssh         = false
-  comfyui_allow_web_ui      = false
-  comfyui_ingress_cidrs     = []
+  comfyui_allow_ssh     = false
+  comfyui_allow_web_ui  = false
+  comfyui_ingress_cidrs = []
 
   # Optional Parsec bootstrap for remote desktop workflow.
   comfyui_parsec_install_enabled = false

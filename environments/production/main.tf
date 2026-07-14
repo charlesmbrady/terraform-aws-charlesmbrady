@@ -78,6 +78,9 @@ module "main" {
     EXAMPLE_ENV_VAR = "example"
   }
 
+  agentcore_socket_enabled         = true
+  agentcore_socket_allowed_origins = [local.apps_domain]
+
   cognito_clients_allowed_oauth_flows                  = ["code"]
   cognito_clients_allowed_oauth_flows_user_pool_client = true
   cognito_clients_allowed_oauth_scopes                 = ["email", "openid", "profile", "aws.cognito.signin.user.admin"]
