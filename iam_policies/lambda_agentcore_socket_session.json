@@ -19,7 +19,10 @@
     },
     {
       "Effect": "Allow",
-      "Action": ["dynamodb:TransactWriteItems"],
+      "Action": [
+        "dynamodb:TransactWriteItems",
+        "dynamodb:UpdateItem"
+      ],
       "Resource": "${quota_table_arn}"
     },
     {
