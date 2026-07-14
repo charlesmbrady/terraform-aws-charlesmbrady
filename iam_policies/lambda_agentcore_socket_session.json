@@ -19,18 +19,13 @@
     },
     {
       "Effect": "Allow",
-      "Action": [
-        "dynamodb:TransactWriteItems",
-        "dynamodb:UpdateItem"
-      ],
+      "Action": ["dynamodb:TransactWriteItems", "dynamodb:UpdateItem"],
       "Resource": "${quota_table_arn}"
     },
     {
       "Effect": "Allow",
-      "Action": [
-        "bedrock-agentcore:InvokeAgentRuntimeWithWebSocketStream"
-      ],
-      "Resource": "${agentcore_runtime_arn}"
+      "Action": ["bedrock-agentcore:InvokeAgentRuntimeWithWebSocketStream"],
+      "Resource": "${agentcore_runtime_arn}/runtime-endpoint/DEFAULT"
     }
   ]
 }
