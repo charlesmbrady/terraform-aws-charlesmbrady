@@ -52,6 +52,8 @@ module "agentcore_socket_session_iam" {
 
   role_vars = {
     kms_key_id            = var.kms_key_id
+    region                = data.aws_region.main.name
+    account_id            = data.aws_caller_identity.main.account_id
     quota_table_arn       = aws_dynamodb_table.agentcore_socket_quota.arn
     agentcore_runtime_arn = module.agentcore.runtime_arn
   }

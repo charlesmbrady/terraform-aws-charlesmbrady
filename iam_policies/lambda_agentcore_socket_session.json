@@ -25,7 +25,11 @@
     {
       "Effect": "Allow",
       "Action": ["bedrock-agentcore:InvokeAgentRuntimeWithWebSocketStream"],
-      "Resource": "${agentcore_runtime_arn}/runtime-endpoint/DEFAULT"
+      "Resource": [
+        "${agentcore_runtime_arn}",
+        "arn:aws:bedrock-agentcore:${region}:${account_id}:runtime/*",
+        "${agentcore_runtime_arn}/runtime-endpoint/DEFAULT"
+      ]
     }
   ]
 }
