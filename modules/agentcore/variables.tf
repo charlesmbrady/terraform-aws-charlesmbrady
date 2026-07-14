@@ -78,6 +78,28 @@ variable "memory_retention_days" {
   default     = 30
 }
 
+variable "idle_runtime_session_timeout" {
+  type        = number
+  description = "Seconds before an idle AgentCore runtime session is terminated"
+  default     = 120
+
+  validation {
+    condition     = var.idle_runtime_session_timeout >= 60 && var.idle_runtime_session_timeout <= 28800
+    error_message = "Idle runtime session timeout must be between 60 and 28,800 seconds."
+  }
+}
+
+variable "max_lifetime" {
+  type        = number
+  description = "Maximum AgentCore runtime session lifetime in seconds"
+  default     = 900
+
+  validation {
+    condition     = var.max_lifetime >= 60 && var.max_lifetime <= 28800
+    error_message = "Maximum runtime lifetime must be between 60 and 28,800 seconds."
+  }
+}
+
 ###############################################################################
 #### Agent Runtime Artifact (Code) Source
 ###############################################################################

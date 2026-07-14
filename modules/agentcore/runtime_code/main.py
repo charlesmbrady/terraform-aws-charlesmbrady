@@ -4,6 +4,7 @@ Simplified layout: all third-party dependencies can live under `vendored/`.
 We manually extend sys.path so the runtime zip can stay clean.
 """
 
+import json
 import os
 import sys
 import traceback
@@ -23,6 +24,7 @@ try:
     from strands import Agent
     from strands.models import BedrockModel
     from strands.tools import tool
+    from starlette.websockets import WebSocketDisconnect
     from memory_hook_provider import MemoryHook
 
     print("[startup] Imported bedrock_agentcore + strands + memory successfully")
@@ -33,6 +35,10 @@ except Exception as import_err:
     class BedrockAgentCoreApp:
         def entrypoint(self, fn):
             self._fn = fn
+            return fn
+
+        def websocket(self, fn):
+            self._websocket_fn = fn
             return fn
 
         def run(self):
@@ -51,6 +57,9 @@ except Exception as import_err:
     def tool(fn):
         return fn
 
+    class WebSocketDisconnect(Exception):
+        pass
+
 
 # Pin region deterministically via env provided by Terraform
 REGION = os.environ.get("AGENTCORE_REGION", "us-east-1")
@@ -63,6 +72,9 @@ MODEL_ID = os.environ.get(
 AGENT_INSTRUCTION = os.environ.get("AGENT_INSTRUCTION", "You are a helpful assistant.")
 RAG_BUCKET = os.environ.get("RAG_BUCKET", "")
 MEMORY_ID = os.environ.get("MEMORY_ID", "")  # From Terraform memory resource
+SOCKET_PROTOCOL_VERSION = 1
+MAX_SOCKET_PROMPT_LENGTH = 2000
+MAX_SOCKET_TURNS = 20
 
 # System prompt - Portfolio-focused conversational agent
 SYSTEM_PROMPT = f"""You are Charles Brady's AI portfolio assistant. Your role is to have natural, engaging conversations about Charles's professional work, technical expertise, and projects.
@@ -410,6 +422,175 @@ def get_technical_expertise(area: str) -> str:
 
 **Experience:** {info['experience']}
 """
+
+
+# ============================================================================
+# WEBSOCKET - AgentCore Runtime streaming handler
+# ============================================================================
+
+
+def create_agent(session_id, actor_id):
+    """Create a session-scoped agent and optional memory hook."""
+    if model is None:
+        raise RuntimeError("Agent model not initialized")
+
+    memory_hook = None
+    if MEMORY_ID:
+        try:
+            memory_client = MemoryClient()
+            memory_hook = MemoryHook(
+                memory_client=memory_client,
+                memory_id=MEMORY_ID,
+                actor_id=actor_id,
+                session_id=session_id,
+            )
+        except Exception as memory_error:
+            print(f"[websocket] Memory initialization failed: {memory_error}")
+
+    agent_kwargs = {
+        "model": model,
+        "tools": [get_project_details, get_technical_expertise],
+        "system_prompt": SYSTEM_PROMPT,
+    }
+    if memory_hook:
+        agent_kwargs["hooks"] = [memory_hook]
+
+    return Agent(**agent_kwargs)
+
+
+async def send_socket_event(websocket, event_type, **payload):
+    await websocket.send_json(
+        {
+            "version": SOCKET_PROTOCOL_VERSION,
+            "type": event_type,
+            **payload,
+        }
+    )
+
+
+@app.websocket
+async def websocket_handler(websocket, context):
+    await websocket.accept()
+
+    session_id = context.session_id or "local-websocket-session"
+    actor_id = f"public-{session_id}"
+
+    try:
+        agent = create_agent(session_id, actor_id)
+    except Exception as agent_error:
+        print(f"[websocket] Agent initialization failed: {agent_error}")
+        await send_socket_event(
+            websocket,
+            "chat.error",
+            message="The assistant is temporarily unavailable.",
+        )
+        await websocket.close(code=1011)
+        return
+
+    await send_socket_event(
+        websocket,
+        "session.ready",
+        sessionId=session_id,
+        limits={
+            "maxPromptLength": MAX_SOCKET_PROMPT_LENGTH,
+            "maxTurns": MAX_SOCKET_TURNS,
+        },
+    )
+
+    turn_count = 0
+
+    try:
+        while True:
+            message = await websocket.receive_json()
+
+            if not isinstance(message, dict) or message.get("type") != "chat.send":
+                await send_socket_event(
+                    websocket,
+                    "chat.error",
+                    requestId=message.get("id") if isinstance(message, dict) else None,
+                    message="Unsupported socket message.",
+                )
+                continue
+
+            request_id = str(message.get("id") or "")
+            content = message.get("content")
+
+            if not request_id or not isinstance(content, str) or not content.strip():
+                await send_socket_event(
+                    websocket,
+                    "chat.error",
+                    requestId=request_id or None,
+                    message="A non-empty message is required.",
+                )
+                continue
+
+            content = content.strip()
+            if len(content) > MAX_SOCKET_PROMPT_LENGTH:
+                await send_socket_event(
+                    websocket,
+                    "limit.reached",
+                    requestId=request_id,
+                    limit="promptLength",
+                    message=f"Messages are limited to {MAX_SOCKET_PROMPT_LENGTH} characters.",
+                )
+                await websocket.close(code=1008)
+                return
+
+            if turn_count >= MAX_SOCKET_TURNS:
+                await send_socket_event(
+                    websocket,
+                    "limit.reached",
+                    requestId=request_id,
+                    limit="turns",
+                    message="This demo session has reached its message limit.",
+                )
+                await websocket.close(code=1008)
+                return
+
+            turn_count += 1
+            await send_socket_event(
+                websocket,
+                "chat.accepted",
+                requestId=request_id,
+                turn=turn_count,
+            )
+
+            try:
+                async for event in agent.stream_async(content):
+                    text_delta = event.get("data") if isinstance(event, dict) else None
+                    if isinstance(text_delta, str) and text_delta:
+                        await send_socket_event(
+                            websocket,
+                            "chat.delta",
+                            requestId=request_id,
+                            delta=text_delta,
+                        )
+
+                await send_socket_event(
+                    websocket,
+                    "chat.complete",
+                    requestId=request_id,
+                )
+            except Exception as generation_error:
+                print(
+                    f"[websocket] Generation failed for {request_id}: "
+                    f"{generation_error}\n{traceback.format_exc()}"
+                )
+                await send_socket_event(
+                    websocket,
+                    "chat.error",
+                    requestId=request_id,
+                    message="The assistant could not complete that response.",
+                )
+    except WebSocketDisconnect:
+        print(f"[websocket] Session disconnected: {session_id}")
+    except json.JSONDecodeError:
+        await send_socket_event(
+            websocket,
+            "chat.error",
+            message="Messages must use JSON.",
+        )
+        await websocket.close(code=1008)
 
 
 # ============================================================================

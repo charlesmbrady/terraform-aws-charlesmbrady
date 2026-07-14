@@ -1,10 +1,40 @@
 locals {
-  mockdat_name = "mockdat"
+  mockdat_name                = "mockdat"
+  agentcore_socket_quota_name = "agentcore-socket-quota"
   # self_driving_car_name  = "self-driving-car"
   # google_books_search_name = "google-books-search"
   # scrape_n_surf_name     = "scrape-n-surf"
   # dupe_gen_name          = "dupe-gen"
   # better_banking_name    = "better-banking"
+}
+
+resource "aws_dynamodb_table" "agentcore_socket_quota" {
+  name         = "${local.agentcore_socket_quota_name}-${var.environment_tag}"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "pk"
+
+  attribute {
+    name = "pk"
+    type = "S"
+  }
+
+  ttl {
+    attribute_name = "expiresAt"
+    enabled        = true
+  }
+
+  server_side_encryption {
+    enabled = true
+  }
+
+  point_in_time_recovery {
+    enabled = false
+  }
+
+  tags = {
+    Name        = local.agentcore_socket_quota_name
+    Environment = var.environment_tag
+  }
 }
 
 resource "aws_dynamodb_table" "mockdat" {

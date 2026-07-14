@@ -176,6 +176,30 @@ variable "charlesmbrady_middleware_environment_variables" {
   description = "Environment variables for the charlesmbrady middleware lambda"
 }
 
+variable "agentcore_socket_enabled" {
+  type        = bool
+  description = "Whether the public AgentCore WebSocket session bootstrap is enabled"
+  default     = false
+}
+
+variable "agentcore_socket_allowed_origins" {
+  type        = list(string)
+  description = "Browser origins allowed to create public AgentCore WebSocket sessions"
+  default     = []
+}
+
+variable "agentcore_socket_hourly_ip_limit" {
+  type        = number
+  description = "Maximum public WebSocket sessions issued per source IP each hour"
+  default     = 5
+}
+
+variable "agentcore_socket_daily_text_limit" {
+  type        = number
+  description = "Maximum public text WebSocket sessions issued globally each day"
+  default     = 100
+}
+
 variable "sso_domain_name" {
   type        = string
   description = "The domain name for the SSO service"
