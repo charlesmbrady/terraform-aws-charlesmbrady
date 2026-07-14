@@ -4,9 +4,12 @@ Simplified layout: all third-party dependencies can live under `vendored/`.
 We manually extend sys.path so the runtime zip can stay clean.
 """
 
+import asyncio
+import base64
 import json
 import os
 import sys
+import time
 import traceback
 import boto3
 
@@ -61,6 +64,20 @@ except Exception as import_err:
         pass
 
 
+BIDI_AVAILABLE = False
+try:
+    from strands.experimental.bidi import BidiAgent
+    from strands.experimental.bidi.models import BidiNovaSonicModel
+
+    BIDI_AVAILABLE = True
+    print("[startup] Imported Strands bidirectional streaming successfully")
+except Exception as bidi_import_error:
+    print(
+        "[startup-warning] Voice dependencies unavailable: "
+        f"{bidi_import_error}\n{traceback.format_exc()}"
+    )
+
+
 # Pin region deterministically via env provided by Terraform
 REGION = os.environ.get("AGENTCORE_REGION", "us-east-1")
 print(f"[startup] Using REGION={REGION} for AgentCore runtime")
@@ -75,6 +92,9 @@ MEMORY_ID = os.environ.get("MEMORY_ID", "")  # From Terraform memory resource
 SOCKET_PROTOCOL_VERSION = 1
 MAX_SOCKET_PROMPT_LENGTH = 2000
 MAX_SOCKET_TURNS = 20
+VOICE_MODEL_ID = os.environ.get("VOICE_MODEL", "amazon.nova-2-sonic-v1:0")
+MAX_VOICE_SESSION_SECONDS = 120
+MAX_VOICE_AUDIO_BYTES = 12 * 1024
 
 # System prompt - Portfolio-focused conversational agent
 SYSTEM_PROMPT = f"""You are Charles Brady's AI portfolio assistant. Your role is to have natural, engaging conversations about Charles's professional work, technical expertise, and projects.
@@ -468,6 +488,217 @@ async def send_socket_event(websocket, event_type, **payload):
     )
 
 
+class VoiceSessionStopped(Exception):
+    pass
+
+
+class VoiceSessionLimitReached(Exception):
+    pass
+
+
+class VoiceSocketInput:
+    def __init__(self, websocket):
+        self.websocket = websocket
+        self.started_at = time.monotonic()
+
+    async def __call__(self):
+        while True:
+            remaining = MAX_VOICE_SESSION_SECONDS - (
+                time.monotonic() - self.started_at
+            )
+            if remaining <= 0:
+                raise VoiceSessionLimitReached()
+
+            try:
+                message = await asyncio.wait_for(
+                    self.websocket.receive_json(), timeout=remaining
+                )
+            except asyncio.TimeoutError as error:
+                raise VoiceSessionLimitReached() from error
+
+            if not isinstance(message, dict):
+                await send_socket_event(
+                    self.websocket,
+                    "voice.error",
+                    message="Voice messages must use JSON.",
+                )
+                continue
+
+            if message.get("type") == "voice.stop":
+                raise VoiceSessionStopped()
+
+            if message.get("type") != "voice.audio":
+                await send_socket_event(
+                    self.websocket,
+                    "voice.error",
+                    message="Unsupported message during voice mode.",
+                )
+                continue
+
+            audio = message.get("audio")
+            if not isinstance(audio, str):
+                await send_socket_event(
+                    self.websocket,
+                    "voice.error",
+                    message="Voice audio is missing.",
+                )
+                continue
+
+            try:
+                audio_bytes = base64.b64decode(audio, validate=True)
+            except (ValueError, TypeError):
+                audio_bytes = b""
+
+            if not audio_bytes or len(audio_bytes) > MAX_VOICE_AUDIO_BYTES:
+                await send_socket_event(
+                    self.websocket,
+                    "voice.error",
+                    message="Voice audio chunk is invalid.",
+                )
+                continue
+
+            if (
+                message.get("format") != "pcm"
+                or message.get("sampleRate") != 16000
+                or message.get("channels") != 1
+            ):
+                await send_socket_event(
+                    self.websocket,
+                    "voice.error",
+                    message="Voice audio must be 16 kHz mono PCM.",
+                )
+                continue
+
+            return {
+                "type": "bidi_audio_input",
+                "audio": audio,
+                "format": "pcm",
+                "sample_rate": 16000,
+                "channels": 1,
+            }
+
+
+async def send_voice_output(websocket, event):
+    event_type = event.get("type") if isinstance(event, dict) else None
+
+    if event_type == "bidi_audio_stream":
+        await send_socket_event(
+            websocket,
+            "voice.audio",
+            audio=event.get("audio"),
+            format=event.get("format"),
+            sampleRate=event.get("sample_rate"),
+            channels=event.get("channels"),
+        )
+    elif event_type == "bidi_transcript_stream":
+        await send_socket_event(
+            websocket,
+            "voice.transcript",
+            role=event.get("role"),
+            text=event.get("current_transcript") or event.get("text", ""),
+            isFinal=bool(event.get("is_final")),
+        )
+    elif event_type == "bidi_response_start":
+        await send_socket_event(websocket, "voice.response.start")
+    elif event_type == "bidi_response_complete":
+        await send_socket_event(
+            websocket,
+            "voice.response.complete",
+            stopReason=event.get("stop_reason"),
+        )
+    elif event_type == "bidi_interruption":
+        await send_socket_event(
+            websocket,
+            "voice.interrupted",
+            reason=event.get("reason"),
+        )
+    elif event_type == "bidi_error":
+        await send_socket_event(
+            websocket,
+            "voice.error",
+            message="The voice assistant encountered an error.",
+        )
+
+
+async def run_voice_session(websocket, session_id):
+    if not BIDI_AVAILABLE:
+        await send_socket_event(
+            websocket,
+            "voice.error",
+            message="Voice mode is temporarily unavailable.",
+        )
+        return
+
+    model = BidiNovaSonicModel(
+        model_id=VOICE_MODEL_ID,
+        provider_config={
+            "audio": {"voice": "matthew"},
+            "turn_detection": {"endpointingSensitivity": "HIGH"},
+        },
+        client_config={"region": REGION},
+    )
+    agent = BidiAgent(
+        model=model,
+        tools=[get_project_details, get_technical_expertise],
+        system_prompt=(
+            f"{SYSTEM_PROMPT}\n\n"
+            "You are speaking aloud. Keep answers concise and conversational."
+        ),
+    )
+    output_task = None
+    input_task = None
+
+    try:
+        await agent.start(
+            invocation_state={"session_id": session_id, "mode": "voice"}
+        )
+
+        async def forward_outputs():
+            async for event in agent.receive():
+                await send_voice_output(websocket, event)
+
+        output_task = asyncio.create_task(forward_outputs())
+        await send_socket_event(
+            websocket,
+            "voice.ready",
+            sampleRate=16000,
+            channels=1,
+            maxDurationSeconds=MAX_VOICE_SESSION_SECONDS,
+        )
+
+        voice_input = VoiceSocketInput(websocket)
+        while True:
+            input_task = asyncio.create_task(voice_input())
+            completed, _ = await asyncio.wait(
+                {input_task, output_task},
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+            if output_task in completed:
+                input_task.cancel()
+                await asyncio.gather(input_task, return_exceptions=True)
+                await output_task
+                raise RuntimeError("Voice output stream ended unexpectedly.")
+
+            await agent.send(input_task.result())
+            input_task = None
+    except VoiceSessionStopped:
+        await send_socket_event(websocket, "voice.stopped")
+    except VoiceSessionLimitReached:
+        await send_socket_event(
+            websocket,
+            "voice.limit.reached",
+            message="Voice sessions are limited to two minutes.",
+        )
+    finally:
+        if input_task:
+            input_task.cancel()
+            await asyncio.gather(input_task, return_exceptions=True)
+        if output_task:
+            output_task.cancel()
+            await asyncio.gather(output_task, return_exceptions=True)
+        await agent.stop()
+
+
 @app.websocket
 async def websocket_handler(websocket, context):
     await websocket.accept()
@@ -502,6 +733,23 @@ async def websocket_handler(websocket, context):
     try:
         while True:
             message = await websocket.receive_json()
+
+            if isinstance(message, dict) and message.get("type") == "voice.start":
+                try:
+                    await run_voice_session(websocket, session_id)
+                except WebSocketDisconnect:
+                    raise
+                except Exception as voice_error:
+                    print(
+                        f"[websocket] Voice session failed: {voice_error}\n"
+                        f"{traceback.format_exc()}"
+                    )
+                    await send_socket_event(
+                        websocket,
+                        "voice.error",
+                        message="The voice assistant is temporarily unavailable.",
+                    )
+                continue
 
             if not isinstance(message, dict) or message.get("type") != "chat.send":
                 await send_socket_event(

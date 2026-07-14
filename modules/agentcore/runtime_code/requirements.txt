@@ -1,7 +1,7 @@
 # AgentCore Runtime - Production Dependencies
 # Exact workshop requirements with pinned versions
 
-strands-agents
+strands-agents[bidi]
 strands-agents-tools
 boto3==1.43.31
 botocore==1.43.31

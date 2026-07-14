@@ -45,7 +45,8 @@ data "aws_iam_policy_document" "agentcore_runtime_policy" {
     effect = "Allow"
     actions = [
       "bedrock:InvokeModel",
-      "bedrock:InvokeModelWithResponseStream"
+      "bedrock:InvokeModelWithResponseStream",
+      "bedrock:InvokeModelWithBidirectionalStream"
     ]
     resources = [
       "arn:aws:bedrock:${var.region}::foundation-model/*",
