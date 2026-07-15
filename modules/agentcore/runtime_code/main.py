@@ -503,9 +503,7 @@ class VoiceSocketInput:
 
     async def __call__(self):
         while True:
-            remaining = MAX_VOICE_SESSION_SECONDS - (
-                time.monotonic() - self.started_at
-            )
+            remaining = MAX_VOICE_SESSION_SECONDS - (time.monotonic() - self.started_at)
             if remaining <= 0:
                 raise VoiceSessionLimitReached()
 
@@ -649,9 +647,7 @@ async def run_voice_session(websocket, session_id):
     input_task = None
 
     try:
-        await agent.start(
-            invocation_state={"session_id": session_id, "mode": "voice"}
-        )
+        await agent.start(invocation_state={"session_id": session_id, "mode": "voice"})
 
         async def forward_outputs():
             async for event in agent.receive():
