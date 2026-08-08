@@ -1,8 +1,8 @@
-openapi: '3.0.1'
+openapi: "3.0.1"
 info:
-  title: 'ServicesAPI'
+  title: "ServicesAPI"
 servers:
-  - url: 'https://${charlesmbrady_api_domain_name}'
+  - url: "https://${charlesmbrady_api_domain_name}"
 paths:
   /public/agentcore/socket-session:
     options:
@@ -24,7 +24,7 @@ paths:
         type: mock
         responses:
           default:
-            statusCode: '200'
+            statusCode: "200"
             responseParameters:
               method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
               method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
@@ -65,12 +65,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Empty'
+                $ref: "#/components/schemas/Empty"
       x-amazon-apigateway-integration:
         type: mock
         responses:
           default:
-            statusCode: '200'
+            statusCode: "200"
             responseParameters:
               method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
               method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
@@ -93,7 +93,7 @@ paths:
         uri: arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambda_charlesmbrady_middleware_arn}/invocations
         responses:
           default:
-            statusCode: '200'
+            statusCode: "200"
         passthroughBehavior: when_no_match
         timeoutInMillis: 29000
         cacheNamespace: 7jtq04
@@ -103,22 +103,22 @@ paths:
 components:
   schemas:
     Empty:
-      title: 'Empty Schema'
-      type: 'object'
+      title: "Empty Schema"
+      type: "object"
   securitySchemes:
     api_key:
-      type: 'apiKey'
-      name: 'x-api-key'
-      in: 'header'
+      type: "apiKey"
+      name: "x-api-key"
+      in: "header"
     ${cognitoAuthorizerName}:
-      type: 'apiKey'
-      name: 'Authorization'
-      in: 'header'
-      x-amazon-apigateway-authtype: 'cognito_user_pools'
+      type: "apiKey"
+      name: "Authorization"
+      in: "header"
+      x-amazon-apigateway-authtype: "cognito_user_pools"
       x-amazon-apigateway-authorizer:
         providerARNs:
-          - '${cognito_user_pool_arn}'
-        type: 'cognito_user_pools'
+          - "${cognito_user_pool_arn}"
+        type: "cognito_user_pools"
 x-amazon-apigateway-gateway-responses:
   DEFAULT_5XX:
     responseParameters:
