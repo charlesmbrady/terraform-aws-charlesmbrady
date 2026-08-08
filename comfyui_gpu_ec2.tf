@@ -149,7 +149,9 @@ locals {
 
     python3 -m venv /opt/ComfyUI/.venv
     /opt/ComfyUI/.venv/bin/pip install --upgrade pip wheel
-    /opt/ComfyUI/.venv/bin/pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124 || true
+    # cu128 required: requirements.txt pulls comfy-kitchen unpinned, which needs a torch build
+    # new enough to support bare list[int]/list[bool] custom-op type hints (cu124-era torch lacks this).
+    /opt/ComfyUI/.venv/bin/pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128 || true
     /opt/ComfyUI/.venv/bin/pip install -r /opt/ComfyUI/requirements.txt
 
     mkdir -p /opt/ComfyUI/models
