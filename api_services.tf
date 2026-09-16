@@ -3,7 +3,7 @@ locals {
 }
 
 module "services_api" {
-  source  = "app.terraform.io/charlava/apigw-module/aws"
+  source  = "charlava.scalr.io/charlava/apigw-module/aws"
   version = "1.2.0"
 
   api_name       = var.services_api_name
