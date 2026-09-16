@@ -247,61 +247,6 @@ resource "aws_iam_role" "codebuild_role" {
     }]
   })
 
-  inline_policy {
-    name = "CodeBuildPolicy"
-    policy = jsonencode({
-      Version = "2012-10-17"
-      Statement = [
-        {
-          Sid    = "CloudWatchLogs"
-          Effect = "Allow"
-          Action = [
-            "logs:CreateLogGroup",
-            "logs:CreateLogStream",
-            "logs:PutLogEvents",
-          ]
-          Resource = "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/codebuild/*"
-        },
-        {
-          Sid    = "S3SourceBucketAccess"
-          Effect = "Allow"
-          Action = [
-            "s3:GetBucketAcl",
-            "s3:GetBucketLocation",
-          ]
-          Resource = aws_s3_bucket.runtime_source.arn
-        },
-        {
-          Sid    = "S3SourceObjectAccess"
-          Effect = "Allow"
-          Action = [
-            "s3:GetObject",
-            "s3:GetObjectVersion",
-          ]
-          Resource = "${aws_s3_bucket.runtime_source.arn}/*"
-        },
-        {
-          Sid    = "ECRAccess"
-          Effect = "Allow"
-          Action = [
-            "ecr:BatchCheckLayerAvailability",
-            "ecr:GetDownloadUrlForLayer",
-            "ecr:BatchGetImage",
-            "ecr:GetAuthorizationToken",
-            "ecr:PutImage",
-            "ecr:InitiateLayerUpload",
-            "ecr:UploadLayerPart",
-            "ecr:CompleteLayerUpload",
-          ]
-          Resource = [
-            aws_ecr_repository.basic_agent.arn,
-            "*",
-          ]
-        },
-      ]
-    })
-  }
-
   tags = {
     Name        = local.codebuild_role_name
     Environment = var.environment_tag
@@ -309,7 +254,72 @@ resource "aws_iam_role" "codebuild_role" {
   }
 }
 
+# Manage the existing inline policy separately from the IAM role.
+resource "aws_iam_role_policy" "codebuild" {
+  role = aws_iam_role.codebuild_role.id
+  name = "CodeBuildPolicy"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "CloudWatchLogs"
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+        ]
+        Resource = "arn:aws:logs:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/codebuild/*"
+      },
+      {
+        Sid    = "S3SourceBucketAccess"
+        Effect = "Allow"
+        Action = [
+          "s3:GetBucketAcl",
+          "s3:GetBucketLocation",
+        ]
+        Resource = aws_s3_bucket.runtime_source.arn
+      },
+      {
+        Sid    = "S3SourceObjectAccess"
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:GetObjectVersion",
+        ]
+        Resource = "${aws_s3_bucket.runtime_source.arn}/*"
+      },
+      {
+        Sid    = "ECRAccess"
+        Effect = "Allow"
+        Action = [
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage",
+          "ecr:GetAuthorizationToken",
+          "ecr:PutImage",
+          "ecr:InitiateLayerUpload",
+          "ecr:UploadLayerPart",
+          "ecr:CompleteLayerUpload",
+        ]
+        Resource = [
+          aws_ecr_repository.basic_agent.arn,
+          "*",
+        ]
+      },
+    ]
+  })
+}
+
+# Retain the role's previous exclusive inline-policy ownership.
+resource "aws_iam_role_policies_exclusive" "codebuild" {
+  role_name    = aws_iam_role.codebuild_role.name
+  policy_names = [aws_iam_role_policy.codebuild.name]
+}
+
 resource "aws_codebuild_project" "basic_agent_image" {
+  depends_on = [aws_iam_role_policies_exclusive.codebuild]
+
   name         = local.codebuild_project_name
   description  = "Build basic agent Docker image for ${local.base_hy}"
   service_role = aws_iam_role.codebuild_role.arn
@@ -326,7 +336,7 @@ resource "aws_codebuild_project" "basic_agent_image" {
 
     environment_variable {
       name  = "AWS_DEFAULT_REGION"
-      value = data.aws_region.current.name
+      value = data.aws_region.current.region
     }
 
     environment_variable {

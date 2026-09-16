@@ -8,7 +8,7 @@ output "account_id" {
 }
 
 output "region" {
-  value = data.aws_region.main.name
+  value = data.aws_region.main.region
 }
 
 output "availability_zone_primary_name" {

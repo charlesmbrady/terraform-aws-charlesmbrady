@@ -6,7 +6,7 @@ locals {
 
 module "charlesmbrady_middleware_lambda" {
   source  = "charlava.scalr.io/charlava/lambda-module/aws"
-  version = "1.2.8"
+  version = "2.0.0"
 
 
   name     = local.services_middleware_name
@@ -47,7 +47,7 @@ module "services_middleware_iam" {
   role_vars = {
     kms_key_id        = var.kms_key_id
     environment       = var.environment_tag
-    region            = data.aws_region.main.name
+    region            = data.aws_region.main.region
     account_id        = data.aws_caller_identity.main.account_id
     mockdat_table_arn = aws_dynamodb_table.mockdat.arn
     project_name      = var.root_project_name_prefix
