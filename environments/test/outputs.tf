@@ -3,6 +3,11 @@
 #### Define your module attributes, aka outputs.
 ###############################################################################
 
+output "execution_platform" {
+  description = "The remote platform and engine managing this test environment."
+  value       = "Scalr / OpenTofu"
+}
+
 output "account_id" {
   value = module.main.account_id
 }
