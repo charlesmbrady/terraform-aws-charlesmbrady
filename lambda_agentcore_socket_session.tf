@@ -5,7 +5,7 @@ locals {
 
 module "agentcore_socket_session_lambda" {
   source  = "charlava.scalr.io/charlava/lambda-module/aws"
-  version = "1.2.8"
+  version = "2.0.0"
 
   name     = local.agentcore_socket_session_name
   app_name = local.agentcore_socket_session_app_name
@@ -52,7 +52,7 @@ module "agentcore_socket_session_iam" {
 
   role_vars = {
     kms_key_id            = var.kms_key_id
-    region                = data.aws_region.main.name
+    region                = data.aws_region.main.region
     account_id            = data.aws_caller_identity.main.account_id
     quota_table_arn       = aws_dynamodb_table.agentcore_socket_quota.arn
     agentcore_runtime_arn = module.agentcore.runtime_arn

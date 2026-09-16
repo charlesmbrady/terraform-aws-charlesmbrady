@@ -13,7 +13,7 @@ module "agentcore" {
   # Infrastructure dependencies
   kms_key_id                          = var.kms_key_id
   iam_permissions_boundary_policy_arn = data.aws_iam_policy.role_permissions_boundary.arn
-  region                              = data.aws_region.main.name
+  region                              = data.aws_region.main.region
   account_id                          = data.aws_caller_identity.main.account_id
 
   # Tool Lambda configuration
