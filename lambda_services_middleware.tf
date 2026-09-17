@@ -5,8 +5,8 @@ locals {
 }
 
 module "charlesmbrady_middleware_lambda" {
-  source  = "app.terraform.io/charlava/lambda-module/aws"
-  version = "1.2.8"
+  source  = "charlava.scalr.io/charlava/lambda-module/aws"
+  version = "2.0.0"
 
 
   name     = local.services_middleware_name
@@ -34,7 +34,7 @@ module "charlesmbrady_middleware_lambda" {
 }
 
 module "services_middleware_iam" {
-  source  = "app.terraform.io/charlava/iam-module/aws"
+  source  = "charlava.scalr.io/charlava/iam-module/aws"
   version = "1.2.0"
 
   iam_permissions_boundary_policy_arn = data.aws_iam_policy.role_permissions_boundary.arn
@@ -47,7 +47,7 @@ module "services_middleware_iam" {
   role_vars = {
     kms_key_id        = var.kms_key_id
     environment       = var.environment_tag
-    region            = data.aws_region.main.name
+    region            = data.aws_region.main.region
     account_id        = data.aws_caller_identity.main.account_id
     mockdat_table_arn = aws_dynamodb_table.mockdat.arn
     project_name      = var.root_project_name_prefix

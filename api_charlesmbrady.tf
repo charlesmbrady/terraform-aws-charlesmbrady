@@ -3,8 +3,8 @@ locals {
 }
 
 module "charlesmbrady_api" {
-  source  = "app.terraform.io/charlava/apigw-module/aws"
-  version = "1.3.3"
+  source  = "charlava.scalr.io/charlava/apigw-module/aws"
+  version = "2.0.0"
 
   api_name                              = var.charlesmbrady_api_name
   api_stage_name                        = var.charlesmbrady_api_stage_name
@@ -21,7 +21,7 @@ module "charlesmbrady_api" {
     cognito_user_pool_arn               = aws_cognito_user_pool.charlesmbrady.arn
     lambda_charlesmbrady_middleware_arn = module.charlesmbrady_middleware_lambda.function_arn
     lambda_agentcore_socket_session_arn = module.agentcore_socket_session_lambda.function_arn
-    region                              = data.aws_region.main.name
+    region                              = data.aws_region.main.region
     cognitoAuthorizerName               = local.cognitoAuthorizerName
   }
 }
