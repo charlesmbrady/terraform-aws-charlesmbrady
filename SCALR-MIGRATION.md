@@ -1,13 +1,25 @@
-# Scalr migration configuration
+# Scalr workflow
 
-This branch is dedicated to `terraform-aws-charlesmbrady--prod`. Its Scalr working directory is
-`environments/production`. The state was copied and fully compared with
-the frozen Terraform Cloud source. Use OpenTofu 1.12.5.
+This repository uses `main` for the active Scalr workspaces. Use OpenTofu 1.12.5.
 
-Automatic runs and applies are disabled during cutover. Review the migration
-validation plan before any apply; no infrastructure changes were applied by the
-migration. Keep the original TFC workspace locked.
+| Workspace | Working directory |
+| --- | --- |
+| terraform-aws-charlesmbrady--test | `environments/test` |
+| terraform-aws-charlesmbrady--prod | `environments/production` |
 
-This branch preserves the configuration chosen for the migration. Other
-environment directories in this historical checkout are not cut over by this
-branch. Do not use them as active deployment roots.
+Create a feature branch and a pull request against the default branch. Scalr
+previews each affected workspace. Merging queues normal plans; applies require
+manual confirmation. Shared files at the repository root and under `modules/`
+must trigger every active environment.
+
+The remote backend is `charlava.scalr.io`, environment
+`env-v0pdijhqh4b82lrpc`. Terraform Cloud is retained only as a locked historical
+backup. Do not initialize with `-migrate-state` or unlock the former TFC workspace.
+
+The website and CodeBuild policy import blocks adopt existing settings during
+the module upgrade and can remain after import. Review the entire plan before
+applying: production/Charlava may still contain previously identified pending
+changes unrelated to this workflow consolidation.
+
+Dev workspaces are retired and locked. Their historical configurations remain
+on archive branches and must not be merged into the active default branch.
