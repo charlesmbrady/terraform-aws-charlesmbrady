@@ -28,17 +28,29 @@ resource "aws_dynamodb_table" "agentcore_memory" {
 
   # GSI for querying by user ID
   global_secondary_index {
-    name            = "user-index"
-    hash_key        = "user_id"
-    range_key       = "timestamp"
+    name = "user-index"
+    key_schema {
+      attribute_name = "user_id"
+      key_type       = "HASH"
+    }
+    key_schema {
+      attribute_name = "timestamp"
+      key_type       = "RANGE"
+    }
     projection_type = "ALL"
   }
 
   # GSI for querying by conversation type
   global_secondary_index {
-    name            = "conversation-type-index"
-    hash_key        = "conversation_type"
-    range_key       = "timestamp"
+    name = "conversation-type-index"
+    key_schema {
+      attribute_name = "conversation_type"
+      key_type       = "HASH"
+    }
+    key_schema {
+      attribute_name = "timestamp"
+      key_type       = "RANGE"
+    }
     projection_type = "ALL"
   }
 

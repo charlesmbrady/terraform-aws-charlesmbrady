@@ -1,5 +1,9 @@
 module "charlesmbrady" {
-  source = "./modules/cloudfront_setup"
+  source  = "charlava.scalr.io/charlava/cloudfront-module/aws"
+  version = "3.0.0"
+
+  # Preserve the country list from the former local module.
+  locations = ["US", "CA", "GB", "AU", "NZ", "IE"]
 
   environment              = var.environment_tag
   certificate_arn          = var.certificate_arn
@@ -12,7 +16,11 @@ module "charlesmbrady" {
 
 
 module "mockdat" {
-  source = "./modules/cloudfront_setup"
+  source  = "charlava.scalr.io/charlava/cloudfront-module/aws"
+  version = "3.0.0"
+
+  # Preserve the country list from the former local module.
+  locations = ["US", "CA", "GB", "AU", "NZ", "IE"]
 
   environment              = var.environment_tag
   certificate_arn          = var.certificate_arn
@@ -23,7 +31,11 @@ module "mockdat" {
 }
 
 module "apps" {
-  source = "./modules/cloudfront_setup"
+  source  = "charlava.scalr.io/charlava/cloudfront-module/aws"
+  version = "3.0.0"
+
+  # Preserve the country list from the former local module.
+  locations = ["US", "CA", "GB", "AU", "NZ", "IE"]
 
   environment              = var.environment_tag
   certificate_arn          = var.certificate_arn

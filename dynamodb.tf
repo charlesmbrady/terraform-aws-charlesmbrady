@@ -53,17 +53,29 @@ resource "aws_dynamodb_table" "mockdat" {
 
   # GSI for queries by visibility - to find all public scenarios
   global_secondary_index {
-    name            = "visibility-index"
-    hash_key        = "visibility"
-    range_key       = "created_at"
+    name = "visibility-index"
+    key_schema {
+      attribute_name = "visibility"
+      key_type       = "HASH"
+    }
+    key_schema {
+      attribute_name = "created_at"
+      key_type       = "RANGE"
+    }
     projection_type = "ALL"
   }
 
   # GSI for queries by creator - so users can find their own scenarios
   global_secondary_index {
-    name            = "creator-index"
-    hash_key        = "creator_id"
-    range_key       = "created_at"
+    name = "creator-index"
+    key_schema {
+      attribute_name = "creator_id"
+      key_type       = "HASH"
+    }
+    key_schema {
+      attribute_name = "created_at"
+      key_type       = "RANGE"
+    }
     projection_type = "ALL"
   }
 

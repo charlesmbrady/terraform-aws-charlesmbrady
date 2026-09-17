@@ -10,8 +10,8 @@ provider "aws" {
 
 terraform {
   backend "remote" {
-    hostname     = "app.terraform.io"
-    organization = "charlava"
+    hostname     = "charlava.scalr.io"
+    organization = "env-v0pdijhqh4b82lrpc"
 
     workspaces {
       name = "terraform-aws-charlesmbrady--test"
